@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CyberScan — NITECHSPARK</title>
+  <link rel="stylesheet" href="/static/style.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Ionicons -->
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  
+  <!-- jQuery and DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+  <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+  <style>
+    /* DataTables Dark Theme Overrides */
+    div.dt-container { color: var(--text-primary); }
+    div.dt-container .dt-search input { background: var(--bg-surface); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 8px; }
+    div.dt-container select.dt-input { background: var(--bg-surface); color: white; border: 1px solid rgba(255,255,255,0.1); }
+    table.dataTable tbody tr { background-color: transparent !important; }
+    table.dataTable thead th, table.dataTable.no-footer { border-bottom: 1px solid rgba(255,255,255,0.1) !important; color: var(--text-secondary); }
+    .dt-paging-button.current { background: rgba(255,255,255,0.1) !important; color: white !important; border: none !important; }
+    /* Fix table hiding jumping */
+    #resultsTable { width: 100% !important; }
+  </style>
+</head>
+
+<body>
+
+  <div class="layout-container animate-entry">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <img src="/static/logo.png" alt="NITECHSPARK Logo" style="height: 40px; margin-right: 15px;">
+      </div>
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <div style="text-align: right; display: none; @media(min-width: 600px){display:block;}">
+          <!-- Sonic Recon Toggle -->
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <span style="font-size: 0.8rem; color: var(--accent-cyan);">Sonic Recon AI</span>
+            <input type="checkbox" id="voiceToggle" style="width: auto;">
+          </label>
+        </div>
+        <button id="btnSettings" class="btn btn-secondary" style="padding: 8px 12px;">
+          <ion-icon name="options-outline"></ion-icon> Settings
+        </button>
+        <a href="/logout" class="btn btn-secondary" style="padding: 8px 12px;">
+          <ion-icon name="log-out-outline"></ion-icon> Logout
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+
+      <!-- Left Sidebar / Controls -->
+      <div class="scan-panel">
+        <div class="glass-card">
+          <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <ion-icon name="options-outline" style="color: var(--accent-cyan);"></ion-icon> New Scan
+          </h3>
+          <form id="scanForm">
+            <div class="form-group">
+              <label>Target Host / IP</label>
+              <input name="target" id="target" placeholder="e.g. 192.168.1.1" required>
+            </div>
+
+            <div class="form-group">
+              <label>Port Range</label>
+              <input name="ports" id="ports" value="1-1024" placeholder="e.g. 1-1000 or 80,443">
+            </div>
+
+            <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label>Threads</label>
+                <input name="threads" id="threads" value="100" type="number">
+              </div>
+              <div>
+                <label>Timeout (s)</label>
+                <input name="timeout" id="timeout" value="1.0" type="number" step="0.1">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="service" name="service" checked style="width: auto;">
+                <span>Enable Service Probing</span>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+              Launch Scan <ion-icon name="rocket-outline"></ion-icon>
+            </button>
+          </form>
+        </div>
+
+        <!-- Risk Score Card (UNIQUE FEATURE) -->
+        <div class="glass-card" style="text-align: center; position: relative; overflow: hidden;">
+          <h4
+            style="margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px;">
+            AI Threat Score</h4>
+
+          <div style="position: relative; height: 100px; display: flex; align-items: center; justify-content: center;">
+            <svg viewBox="0 0 100 50" width="100%" height="100%">
+              <path d="M10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10"
+                stroke-linecap="round" />
+              <path id="riskMeter" d="M10 50 A 40 40 0 0 1 10 50" fill="none" stroke="var(--accent-green)"
+                stroke-width="10" stroke-linecap="round" style="transition: stroke-dasharray 1s ease;" />
+            </svg>
+            <div style="position: absolute; bottom: 0; text-align: center; width: 100%;">
+              <div id="riskValue" style="font-size: 1.8rem; font-weight: 700; line-height: 1;">0</div>
+              <div style="font-size: 0.7rem; opacity: 0.7;">Low Risk</div>
+            </div>
+          </div>
+          <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 8px;">Based on open port criticality
+          </div>
+        </div>
+
+        <!-- Mini Chart Card -->
+        <div class="glass-card"
+          style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden;">
+
+          <!-- Background decorative glow -->
+          <div
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; background: var(--accent-cyan); filter: blur(60px); opacity: 0.15; pointer-events: none;">
+          </div>
+
+          <h4
+            style="margin-bottom: 16px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary);">
+            Live Metrics</h4>
+          <div style="height: 140px; position: relative; display: flex; align-items: center; justify-content: center;">
+            <canvas id="scanChart" style="z-index: 2; position: relative;"></canvas>
+            <!-- Center Text -->
+            <div id="chartCenterText"
+              style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 1;">
+              <div id="chartPercent" style="font-size: 1.4rem; font-weight: 700; color: white;">0%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Port Check Card -->
+        <div class="glass-card">
+          <h4
+            style="margin-bottom: 15px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary);">
+            Quick Port Check
+          </h4>
+          <div style="display: flex; gap: 8px; flex-direction: column;">
+            <input id="quickTarget" placeholder="Target IP" style="font-size: 0.9rem;">
+            <div style="display: flex; gap: 8px;">
+              <input id="quickPort" placeholder="Port" type="number" style="flex: 1; font-size: 0.9rem;">
+              <button id="btnQuickCheck" class="btn btn-secondary" style="padding: 8px 12px; white-space: nowrap;">
+                Check
+              </button>
+            </div>
+          </div>
+          <div id="quickResult"
+            style="margin-top: 12px; font-weight: 700; font-size: 0.9rem; text-align: center; min-height: 20px;"></div>
+        </div>
+        
+        <!-- Scan History -->
+        <div class="glass-card" style="margin-top: 20px;">
+          <h4 style="margin-bottom: 15px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary);">
+            Recent Scans
+          </h4>
+          <ul id="historyList" style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px;">
+             <!-- populated by js -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Results Area -->
+      <div class="results-panel">
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label">Total Ports</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-scanned" style="color: var(--accent-cyan)">0</div>
+            <div class="stat-label">Scanned</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-open" style="color: var(--accent-green)">0</div>
+            <div class="stat-label">Open Ports</div>
+          </div>
+        </div>
+
+        <!-- Results Table Card -->
+        <div class="glass-card" style="flex: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 id="status-text">Ready to scan</h3>
+            <div style="display: flex; gap: 10px;">
+              <button id="csvBtn" class="btn btn-secondary" disabled>
+                <ion-icon name="document-text-outline"></ion-icon> CSV
+              </button>
+              <button id="downloadBtn" class="btn btn-secondary" disabled>
+                <ion-icon name="download-outline"></ion-icon> JSON
+              </button>
+              <button onclick="window.print()" class="btn btn-secondary">
+                <ion-icon name="print-outline"></ion-icon> Report
+              </button>
+              <button id="clearBtn" class="btn btn-secondary">
+                <ion-icon name="trash-outline"></ion-icon> Clear
+              </button>
+            </div>
+          </div>
+
+          <div id="progress-container" class="progress-container" hidden>
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+
+          <div class="table-container" style="margin-top: 20px;">
+            <table id="resultsTable" hidden>
+              <thead>
+                <tr>
+                  <th>Port</th>
+                  <th>Service</th>
+                  <th>Banner / Info</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody">
+                <!-- Results go here -->
+              </tbody>
+            </table>
+            <div id="empty-state" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+              <ion-icon name="search-outline" style="font-size: 48px; opacity: 0.2;"></ion-icon>
+              <p style="margin-top: 10px;">No scan results to display yet.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal -->
+  <div id="bannerModal"
+    style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"
+    hidden>
+    <div class="glass-card" style="width: 500px; max-width: 90%; background: #0f172a;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+        <h3>Service Details</h3>
+        <button onclick="closeModal()"
+          style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
+      <pre id="modalContent"
+        style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; overflow-x: auto; font-family: 'JetBrains Mono'; color: var(--accent-cyan);"></pre>
+    </div>
+  </div>
+
+  <!-- Settings Modal (Enterprise) -->
+  <div id="settingsModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;" hidden>
+    <div class="glass-card" style="width: 500px; max-width: 90%; background: #0f172a;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+        <h3>Enterprise Settings</h3>
+        <button id="closeSettingsModal" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Webhook URL (SIEM Integration)</label>
+        <input type="text" id="webhookUrl" placeholder="https://your-siem.example.com/api/ingest">
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Scan Profile</label>
+        <select style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px;">
+          <option>Standard Discovery (TCP)</option>
+          <option>Syn Stealth (Requires Root)</option>
+          <option>Comprehensive (All Ports + OS)</option>
+        </select>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-secondary);">*Advanced features require license activation.</p>
+    </div>
+  </div>
+
+  <script>
+    // Init Chart with Gradient
+    const ctx = document.getElementById('scanChart').getContext('2d');
+
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, '#06b6d4'); // Cyan
+    gradient.addColorStop(1, '#8b5cf6'); // Purple
+
+    const scanChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Complete', 'Remaining'],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: [gradient, 'rgba(30, 41, 59, 0.5)'],
+          borderWidth: 0,
+          cutout: '85%',
+          borderRadius: 20,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 500 },
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        }
+      }
+    });
+
+    const form = document.getElementById('scanForm');
+    const resultsTable = document.getElementById('resultsTable');
+    const resultsBody = document.getElementById('resultsBody');
+    const emptyState = document.getElementById('empty-state');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const csvBtn = document.getElementById('csvBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const progressBar = document.getElementById('progress-bar');
+    
+    // Enterprise Integration Vars
+    const btnSettings = document.getElementById('btnSettings');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsModal = document.getElementById('closeSettingsModal');
+    const historyList = document.getElementById('historyList');
+    let dataTable = null;
+
+    btnSettings.addEventListener('click', () => settingsModal.hidden = false);
+    closeSettingsModal.addEventListener('click', () => settingsModal.hidden = true);
+    
+    function initDataTable() {
+        if (!dataTable) { 
+            dataTable = new DataTable('#resultsTable', {
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
+                layout: { topStart: 'pageLength', topEnd: 'search', bottomStart: 'info', bottomEnd: 'paging' },
+                language: { emptyTable: "Evaluating environment..." }
+            });
+        }
+    }
+    
+    function renderHistory() {
+        let h = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+        historyList.innerHTML = '';
+        if(h.length === 0) historyList.innerHTML = '<li style="color:var(--text-secondary)">No recent scans</li>';
+        h.slice(0, 5).forEach(item => {
+            historyList.innerHTML += `<li style="background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:4px;">
+                <span style="color:var(--accent-cyan); font-weight:bold;">${item.target}</span> 
+                <span style="float:right; opacity:0.7">${item.open} open</span>
+            </li>`;
+        });
+    }
+    renderHistory();
+    const progressContainer = document.getElementById('progress-container');
+    const voiceToggle = document.getElementById('voiceToggle');
+
+    // Risk Meter
+    const riskMeter = document.getElementById('riskMeter');
+    const riskValue = document.getElementById('riskValue');
+
+    // Stats
+    const elTotal = document.getElementById('stat-total');
+    const elScanned = document.getElementById('stat-scanned');
+    const elOpen = document.getElementById('stat-open');
+    const statusText = document.getElementById('status-text');
+
+    let eventSource = null;
+    let openPortsCache = [];
+    let currentRiskScore = 0;
+
+    // Sonic Recon Logic
+    function setProgress(pct) {
+      progressContainer.hidden = false;
+      progressBar.style.width = pct + '%';
+      if (pct >= 100) {
+        setTimeout(() => {
+          // progressContainer.hidden = true; 
+        }, 1000);
+      }
+    }
+
+    function speak(text) {
+      if (voiceToggle.checked && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.1; // Slightly faster for "AI" feel
+        utterance.pitch = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function updateRiskScore(port, service) {
+      // Simple risk heuristic
+      let risk = 0;
+      if (['ssh', 'telnet', 'ftp', 'rdp', 'smb'].includes(service)) risk = 20;
+      else if (['http', 'https'].includes(service)) risk = 5;
+      else risk = 10;
+
+      currentRiskScore = Math.min(100, currentRiskScore + risk);
+      riskValue.textContent = currentRiskScore;
+
+      // Calculate arc dash (126 is approx length of semi-circle path for radius 40)
+      // Actually full circle path length for r=40 is 2*PI*40 = 251. 
+      // We only show top half? No, the stored path is half-arc
+      // Let's rely on simple stroke-dasharray trick
+      // length of arc M10 50 A 40 40 0 0 1 90 50 is PI*40 = 125.6
+      const maxLen = 125.6;
+      const dash = (currentRiskScore / 100) * maxLen;
+      riskMeter.style.strokeDasharray = `${dash}, ${maxLen}`;
+
+      // Color Change
+      if (currentRiskScore < 30) riskMeter.style.stroke = '#10b981'; // Green
+      else if (currentRiskScore < 70) riskMeter.style.stroke = '#f59e0b'; // Orange
+      else riskMeter.style.stroke = '#ef4444'; // Red
+    }
+
+    const elChartPercent = document.getElementById('chartPercent');
+
+    function updateChart(percentage) {
+      // Data: [Completed, Remaining]
+      scanChart.data.datasets[0].data = [percentage, 100 - percentage];
+      scanChart.update();
+
+      elChartPercent.textContent = Math.round(percentage) + '%';
+    }
+
+    function formatServiceBadge(service) {
+      const map = {
+        'ssh': 'badge-ssh',
+        'http': 'badge-http',
+        'https': 'badge-https',
+        'ftp': 'badge-closed', // color reuse
+        'closed': 'badge-closed',
+        'unknown': 'badge-unknown'
+      };
+      const cls = map[service] || 'badge-unknown';
+      return `<span class="badge ${cls}">${service}</span>`;
+    }
+
+    $('#resultsTable tbody').on('click', '.view-btn', function() {
+        let b64 = $(this).attr('data-banner');
+        openModal(decodeURIComponent(atob(b64)));
+    });
+
+    function openModal(text) {
+      if (!text || text === '-' || text.trim() === '') {
+        document.getElementById('modalContent').textContent = "No banner information or service details available for this port.";
+      } else {
+        document.getElementById('modalContent').textContent = text;
+      }
+      document.getElementById('bannerModal').hidden = false;
+    }
+    function closeModal() {
+      document.getElementById('bannerModal').hidden = true;
+    }
+
+    clearBtn.addEventListener('click', () => {
+      if(dataTable) dataTable.clear().draw();
+      resultsTable.hidden = true;
+      emptyState.hidden = false;
+      openPortsCache = [];
+      elTotal.textContent = '0';
+      elScanned.textContent = '0';
+      elOpen.textContent = '0';
+      statusText.textContent = 'Ready to scan';
+      riskValue.textContent = '0';
+      riskMeter.style.strokeDasharray = '0, 126';
+      currentRiskScore = 0;
+      downloadBtn.disabled = true;
+      csvBtn.disabled = true;
+      setProgress(0);
+      updateChart(0); // Reset chart
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({ results: openPortsCache }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'scan_results.json';
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+
+    csvBtn.addEventListener('click', () => {
+      if (!openPortsCache.length) return;
+      let csvContent = "data:text/csv;charset=utf-8,Port,Service,Banner\n";
+      openPortsCache.forEach(row => {
+          let b = (row.banner || '').replace(/"/g, '""');
+          csvContent += `"${row.port}","${row.service}","${b}"\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "scan_results.csv");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // console.log("Form submitted");
+      try {
+        if (eventSource) {
+          // console.log("Closing existing event source");
+          eventSource.close();
+        }
+
+        speak("Detailed system scan initiated.");
+
+        // UI Reset
+        initDataTable();
+        dataTable.clear().draw();
+        resultsTable.hidden = false;
+        emptyState.hidden = true;
+        downloadBtn.disabled = true;
+        csvBtn.disabled = true;
+        openPortsCache = [];
+        setProgress(0);
+        statusText.textContent = 'Initiating Scan...';
+        // console.log("UI Reset complete");
+
+        // Stats Reset
+        let totalPorts = 0;
+        let scannedCount = 0;
+        let openCount = 0;
+        currentRiskScore = 0;
+        riskValue.textContent = '0';
+        riskMeter.style.strokeDasharray = '0, 126';
+
+        elScanned.textContent = '0';
+        elOpen.textContent = '0';
+        statusText.textContent = 'Initiating Scan...';
+
+        updateChart(0); // Reset visual
+
+        const formData = new FormData(form);
+        // Convert formData to query string
+        const params = new URLSearchParams();
+        for (const pair of formData.entries()) {
+          params.append(pair[0], pair[1]);
+        }
+
+        // console.log("Creating EventSource with params:", params.toString());
+        eventSource = new EventSource('/stream_scan?' + params.toString());
+
+        eventSource.onopen = () => {
+          // console.log("EventSource connected");
+          statusText.textContent = 'Scanning...';
+        };
+
+        eventSource.onmessage = (e) => {
+          // console.log("Event received:", e.data);
+          const data = JSON.parse(e.data);
+
+          if (data.type === 'meta') {
+            totalPorts = data.total;
+            elTotal.textContent = totalPorts.toLocaleString();
+            statusText.textContent = `Scanning ${formData.get('target')}...`;
+          }
+          else if (data.type === 'result') {
+            scannedCount = data.scanned;
+            elScanned.textContent = scannedCount.toLocaleString();
+
+            // Update progress
+            let pct = 0;
+            if (totalPorts > 0) {
+              pct = (scannedCount / totalPorts) * 100;
+              setProgress(pct);
+            }
+
+            if (data.open) {
+              openCount++;
+              elOpen.textContent = openCount;
+              openPortsCache.push(data);
+
+              // AI Features Trigger
+              speak(`Port ${data.port} is open running ${data.service}`);
+              updateRiskScore(data.port, data.service);
+
+              // Add Row via DataTable API safely handling HTML and escapes
+              let safeBanner = data.banner || '-';
+              // Base64 encode banner to safely pass through DOM string
+              let bannerB64 = btoa(encodeURIComponent(safeBanner));
+
+              dataTable.row.add([
+                  `<span style="font-family:'JetBrains Mono'">${data.port}</span>`,
+                  formatServiceBadge(data.service),
+                  `<div style="color:var(--text-secondary); font-size:0.85rem; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeBanner.replace(/"/g, '&quot;')}">${safeBanner}</div>`,
+                  `<div style="text-align:right;">
+                      <button class="btn btn-secondary view-btn" style="padding:4px 8px; font-size:0.8rem;" data-banner="${bannerB64}">View</button>
+                  </div>`
+              ]).draw(false);
+            }
+
+            // Update chart every few updates to save perf
+            if (scannedCount % 5 === 0 || data.open) {
+              updateChart(pct);
+            }
+          }
+          else if (data.type === 'complete') {
+            // console.log("Scan complete");
+            eventSource.close();
+            statusText.textContent = 'Scan Complete';
+            downloadBtn.disabled = false;
+            csvBtn.disabled = false;
+            
+            // Save to history
+            let h = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+            h.unshift({ target: formData.get('target'), open: openCount, time: new Date().getTime() });
+            localStorage.setItem('scanHistory', JSON.stringify(h));
+            renderHistory();
+            setProgress(100);
+            updateChart(100);
+
+            speak(`Scan complete. Found ${openCount} open ports. Risk score is ${currentRiskScore}.`);
+          }
+          else if (data.type === 'error') {
+            console.error("Scan error:", data.message);
+            eventSource.close();
+            statusText.innerHTML = `<span style="color:var(--accent-red)">Error: ${data.message}</span>`;
+            speak("Scan error detected.");
+          }
+        };
+
+        eventSource.onerror = (err) => {
+          console.error("EventSource failed:", err);
+          statusText.innerHTML = `<span style="color:var(--accent-red)">Connection Failed</span>`;
+          if (eventSource.readyState !== EventSource.CLOSED) {
+            eventSource.close();
+          }
+        };
+
+      } catch (err) {
+        console.error("Submit Error:", err);
+        alert("Error starting scan: " + err.message);
+      }
+    });
+
+    // Quick Port Check Logic
+    const btnQuickCheck = document.getElementById('btnQuickCheck');
+    const quickTarget = document.getElementById('quickTarget');
+    const quickPort = document.getElementById('quickPort');
+    const quickResult = document.getElementById('quickResult');
+
+    btnQuickCheck.addEventListener('click', async () => {
+      const target = quickTarget.value.trim();
+      const port = quickPort.value.trim();
+
+      if (!target || !port) {
+        quickResult.innerHTML = '<span style="color:var(--accent-warn)">Enter IP & Port</span>';
+        return;
+      }
+
+      quickResult.innerHTML = '<span style="color:var(--text-secondary)">Checking...</span>';
+      btnQuickCheck.disabled = true;
+
+      try {
+        const res = await fetch('/check_port', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, port })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          quickResult.innerHTML = `<span style="color:var(--accent-red)">Error</span>`;
+        } else if (data.open) {
+          quickResult.innerHTML = `<span style="color:var(--accent-green)">OPEN <ion-icon name="checkmark-circle"></ion-icon></span>`;
+          speak(`Quick check: Port ${port} is open.`);
+        } else {
+          quickResult.innerHTML = `<span style="color:var(--accent-red)">CLOSED <ion-icon name="close-circle"></ion-icon></span>`;
+        }
+      } catch (e) {
+        quickResult.innerHTML = `<span style="color:var(--accent-red)">Failed</span>`;
+      } finally {
+        btnQuickCheck.disabled = false;
+      }
+    });
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,60 @@
+nohup: ignoring input
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 133-341-578
+127.0.0.1 - - [15/Feb/2026 23:14:30] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:14:30] "GET /static/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:19:05] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:19:05] "GET /static/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:19:13] "GET /stream_scan?target=127.0.0.1&ports=1-1024&threads=100&timeout=1.0 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:21:36] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:21:36] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:21:46] "GET /stream_scan?target=127.0.0.1&ports=1-1024&threads=100&timeout=1.0 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:30:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:30:58] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:33:00] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:33:00] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:39:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:39:58] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:40:06] "[32mGET /logout HTTP/1.1[0m" 302 -
+127.0.0.1 - - [15/Feb/2026 23:40:06] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:40:06] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:41:45] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:41:45] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:41:50] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:41:50] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:42:07] "[32mPOST /login HTTP/1.1[0m" 302 -
+127.0.0.1 - - [15/Feb/2026 23:42:07] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:42:07] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+ * Detected change in '/home/nithyananthan/Port_Sacnner/port_scanner.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 133-341-578
+127.0.0.1 - - [15/Feb/2026 23:46:18] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:46:18] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:48:07] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:48:07] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Feb/2026 23:48:13] "GET /stream_scan?target=127.0.0.1&ports=1-1024&threads=100&timeout=1.0&service=on HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:52:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:52:10] "GET /static/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:58:40] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:58:40] "GET /static/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Feb/2026 23:58:49] "GET /stream_scan?target=127.0.0.1&ports=1-1024&threads=100&timeout=1.0&service=on HTTP/1.1" 200 -
+ * Detected change in '/home/nithyananthan/Port_Sacnner/webapp/app.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 133-341-578
+127.0.0.1 - - [16/Feb/2026 00:08:04] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Feb/2026 00:08:04] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Feb/2026 00:08:26] "POST /check_port HTTP/1.1" 200 -
+ * Detected change in '/home/nithyananthan/Port_Sacnner/webapp/app.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [16/Feb/2026 00:15:47] "GET /stream_scan?target=127.0.0.1&ports=1-1024&threads=100&timeout=1.0&service=on HTTP/1.1" 200 -
+127.0.0.1 - - [16/Feb/2026 00:34:42] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/Feb/2026 00:40:52] "GET /stream_scan?target=127.0.0.1&ports=1-1024&threads=100&timeout=1.0&service=on HTTP/1.1" 200 -
+127.0.0.1 - - [16/Feb/2026 00:41:26] "POST /check_port HTTP/1.1" 200 -

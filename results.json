@@ -1,0 +1,14 @@
+[
+  {
+    "target": "example.com",
+    "port": 80,
+    "service": "http",
+    "banner": "HTTP/1.1 403 Forbidden\r\nDate: Sun, 15 Feb 2026 14:01:13 GMT\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 16\r\nConnection: close\r\nX-Frame-Options: SAMEORIGIN\r\nReferrer-Policy: same-origin\r\nCache-Control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0\r\nExpires: Thu, 01 Jan 1970 00:00:01 GMT\r\nServer: cloudflare\r\nCF-RAY: 9ce55602ea9c968e-MAA"
+  },
+  {
+    "target": "example.com",
+    "port": 443,
+    "service": "https",
+    "banner": ""
+  }
+]
