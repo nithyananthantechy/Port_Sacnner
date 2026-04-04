@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>API access — CyberScan</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    .code-box { position:relative; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px; margin:10px 0; font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--accent-cyan); overflow-x:auto; }
+    .copy-btn { position:absolute; top:8px; right:8px; padding:4px 10px; font-size:0.72rem; }
+  </style>
+</head>
+<body>
+<div class="layout-container animate-entry">
+  <header class="app-header">
+    <div class="logo-area">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" style="padding:8px 12px;"><ion-icon name="arrow-back-outline"></ion-icon> Dashboard</a>
+      <span class="logo-text" style="margin-left:12px;">Developer API</span>
+    </div>
+  </header>
+
+  <div class="glass-card" style="margin-bottom:20px;">
+    <h3 style="margin-bottom:12px;">Usage today</h3>
+    <p style="font-size:1.2rem;"><strong style="color:var(--accent-cyan);">{{ api_used }}</strong> / 100 calls used · <strong>{{ api_remaining }}</strong> remaining</p>
+    <p style="color:var(--text-secondary); font-size:0.85rem;">Authenticate with header <code style="font-family:'JetBrains Mono',monospace;">X-API-Key: your_key</code> or query <code>?key=</code>.</p>
+  </div>
+
+  <div class="glass-card" style="margin-bottom:20px;">
+    <h3 style="margin-bottom:12px;">Your keys</h3>
+    {% if api_keys %}
+    <ul style="list-style:none; padding:0;">
+      {% for k in api_keys %}
+      <li style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span><strong>{{ k.label }}</strong> · <span style="font-family:'JetBrains Mono',monospace; font-size:0.85rem;">{{ k.key_prefix }}</span> · {{ k.created_at }}</span>
+        <button type="button" class="btn btn-secondary btn-sm btn-revoke" data-id="{{ k.id }}">Revoke</button>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:var(--text-secondary);">No keys yet. Generate one below.</p>
+    {% endif %}
+    <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+      <input type="text" id="keyLabel" placeholder="Label (e.g. CI)" style="max-width:220px;">
+      <button type="button" id="btnGenKey" class="btn btn-primary">Generate API key</button>
+    </div>
+    <div id="newKeyBox" class="d-none" style="margin-top:14px; padding:12px; border-radius:10px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3);">
+      <strong>Copy now — shown once:</strong>
+      <pre id="newKeyVal" style="margin:8px 0 0; word-break:break-all; font-family:'JetBrains Mono',monospace;"></pre>
+    </div>
+  </div>
+
+  <div class="glass-card">
+    <h3 style="margin-bottom:12px;">Endpoints</h3>
+    <p style="color:var(--text-secondary); font-size:0.88rem;">Replace <code>YOUR_KEY</code> and base URL with your deployment.</p>
+
+    {% set base = request.url_root.rstrip('/') %}
+    <h4 style="margin-top:16px; font-size:0.9rem;">cURL</h4>
+    <div style="position:relative;">
+      <div class="code-box" id="exCurl">curl -H "X-API-Key: YOUR_KEY" "{{ base }}/api/portscan?target=8.8.8.8&range=1-256"</div>
+      <button type="button" class="btn btn-secondary copy-btn" data-copy="exCurl">Copy</button>
+    </div>
+
+    <h4 style="margin-top:24px; font-size:0.9rem;">Python</h4>
+    <div style="position:relative;">
+      <div class="code-box" id="exPy">import requests
+r = requests.get("{{ base }}/api/ssl", params={"target": "google.com"}, headers={"X-API-Key": "YOUR_KEY"})
+print(r.json())</div>
+      <button type="button" class="btn btn-secondary copy-btn" data-copy="exPy">Copy</button>
+    </div>
+
+    <h4 style="margin-top:24px; font-size:0.9rem;">JavaScript</h4>
+    <div style="position:relative;">
+      <div class="code-box" id="exJs">fetch("{{ base }}/api/dns?target=google.com", { headers: { "X-API-Key": "YOUR_KEY" } })
+  .then(r => r.json()).then(console.log);</div>
+      <button type="button" class="btn btn-secondary copy-btn" data-copy="exJs">Copy</button>
+    </div>
+  </div>
+</div>
+<script>
+function csrf() {
+  var m = document.querySelector('meta[name="csrf-token"]');
+  return m ? m.getAttribute('content') : '';
+}
+document.getElementById('btnGenKey').addEventListener('click', async function() {
+  var label = document.getElementById('keyLabel').value.trim() || 'default';
+  var res = await fetch('/api/api-keys', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() }, body: JSON.stringify({ label: label }) });
+  var d = await res.json();
+  if (d.key) {
+    document.getElementById('newKeyVal').textContent = d.key;
+    document.getElementById('newKeyBox').classList.remove('d-none');
+  }
+});
+document.querySelectorAll('.btn-revoke').forEach(function(btn) {
+  btn.addEventListener('click', async function() {
+    await fetch('/api/api-keys/' + btn.dataset.id, { method: 'DELETE', headers: { 'X-CSRFToken': csrf() } });
+    location.reload();
+  });
+});
+document.querySelectorAll('[data-copy]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var id = btn.getAttribute('data-copy');
+    var el = document.getElementById(id);
+    if (el) navigator.clipboard.writeText(el.textContent.trim());
+  });
+});
+</script>
+<style>[hidden], .d-none { display: none !important; }</style>
+</body>
+</html>

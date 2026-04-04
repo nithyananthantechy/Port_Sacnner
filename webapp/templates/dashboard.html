@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>CyberScan — NITECHSPARK</title>
   <link rel="stylesheet" href="/static/style.css">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
@@ -11,6 +12,7 @@
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="/static/js/main.js"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
   <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
 
@@ -24,20 +26,79 @@
     .dt-paging-button.current { background: rgba(255,255,255,0.1) !important; color: white !important; border: none !important; }
     #resultsTable { width: 100% !important; }
 
-    /* ── TAB BAR ── */
-    .tab-bar {
-      display: flex; gap: 4px;
+    /* ── SIDEBAR (tools) + MAIN ── */
+    .dash-body {
+      display: grid;
+      grid-template-columns: min(280px, 34vw) 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .dash-body { grid-template-columns: 1fr; }
+    }
+    .dash-sidebar {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+    }
+    @media (max-width: 960px) {
+      .dash-sidebar { position: static; max-height: none; }
+    }
+    .sidebar-tab-bar {
+      display: flex; flex-direction: column; gap: 4px;
       background: rgba(15,23,42,0.6);
       border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 14px; padding: 6px;
-      margin-bottom: 24px; flex-wrap: wrap;
+      border-radius: 14px; padding: 8px;
     }
+    @media (max-width: 960px) {
+      .sidebar-tab-bar {
+        flex-direction: row; flex-wrap: wrap;
+      }
+      .sidebar-tab-bar .tab-btn {
+        flex: 1 1 auto;
+        min-width: 130px;
+        justify-content: center;
+      }
+    }
+    .sidebar-tab-bar .tab-btn {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .dash-top-actions {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      align-items: center; justify-content: flex-end;
+    }
+    .dash-top-actions label { white-space: nowrap; }
+    .dash-profile-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(15,23,42,0.55);
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .dash-profile-chip:hover {
+      border-color: rgba(6,182,212,0.4);
+      background: rgba(6,182,212,0.08);
+      color: var(--text-primary);
+    }
+    .dash-profile-chip ion-icon { font-size: 1.25rem; color: var(--accent-cyan); }
+    .app-header { margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .dash-main { min-width: 0; }
     .tab-btn {
       display: flex; align-items: center; gap: 8px;
-      padding: 9px 18px; border-radius: 10px;
+      padding: 9px 14px; border-radius: 10px;
       background: transparent; border: none;
       color: var(--text-secondary); font-family: 'Outfit', sans-serif;
-      font-size: 0.88rem; font-weight: 500; cursor: pointer;
+      font-size: 0.85rem; font-weight: 500; cursor: pointer;
       transition: all 0.2s; white-space: nowrap;
     }
     .tab-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
@@ -46,7 +107,7 @@
       color: var(--accent-cyan);
       border: 1px solid rgba(6,182,212,0.25);
     }
-    .tab-btn ion-icon { font-size: 1rem; }
+    .tab-btn ion-icon { font-size: 1rem; flex-shrink: 0; }
 
     /* ── TAB PANELS ── */
     .tab-panel { display: none; }
@@ -125,41 +186,87 @@
   <!-- ── HEADER ── -->
   <header class="app-header">
     <div class="logo-area">
-      <img src="/static/logo.png" alt="NITECHSPARK Logo" style="height:40px; margin-right:10px;">
-      <span class="logo-text">CyberScan</span>
+      <a href="{{ url_for('home') }}" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+        <img src="/static/logo.png" alt="NITECHSPARK Logo" class="header-wordmark" onerror="this.onerror=null;this.src='/static/favicon.svg';">
+        <span class="logo-text">CyberScan</span>
+      </a>
     </div>
-    <div style="display:flex; gap:14px; align-items:center;">
+    <div class="dash-top-actions">
       <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
         <span style="font-size:0.8rem; color:var(--accent-cyan);">Sonic Recon AI</span>
         <input type="checkbox" id="voiceToggle" style="width:auto;">
       </label>
-      <button id="btnSettings" class="btn btn-secondary" style="padding:8px 12px;">
+      <button type="button" id="btnSettings" class="btn btn-secondary" style="padding:8px 12px;">
         <ion-icon name="options-outline"></ion-icon> Settings
       </button>
+      <a href="/api-access" class="btn btn-secondary" style="padding:8px 12px;">
+        <ion-icon name="code-slash-outline"></ion-icon> API
+      </a>
+      <a href="{{ url_for('profile') }}" class="dash-profile-chip" title="Account &amp; profile">
+        <ion-icon name="person-circle-outline"></ion-icon>
+        <span>{{ current_user.username }}</span>
+      </a>
+      <a href="{{ url_for('home') }}" class="btn btn-secondary" style="padding:8px 12px;">
+        <ion-icon name="home-outline"></ion-icon> Home
+      </a>
       <a href="/logout" class="btn btn-secondary" style="padding:8px 12px;">
         <ion-icon name="log-out-outline"></ion-icon> Logout
       </a>
     </div>
   </header>
 
-  <!-- ── TAB BAR ── -->
-  <div class="tab-bar">
-    <button class="tab-btn active" data-tab="scanner">
-      <ion-icon name="search-outline"></ion-icon> Port Scanner
-    </button>
-    <button class="tab-btn" data-tab="ssl">
-      <ion-icon name="lock-closed-outline"></ion-icon> SSL Checker
-    </button>
-    <button class="tab-btn" data-tab="dns">
-      <ion-icon name="globe-outline"></ion-icon> DNS Lookup
-    </button>
-    <button class="tab-btn" data-tab="whois">
-      <ion-icon name="document-text-outline"></ion-icon> WHOIS
-    </button>
-    <button class="tab-btn" data-tab="ping">
-      <ion-icon name="radio-outline"></ion-icon> Ping
-    </button>
+  <div class="dash-body">
+    <aside class="dash-sidebar" aria-label="Security tools">
+      <nav class="sidebar-tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="scanner" role="tab" aria-selected="true">
+          <ion-icon name="search-outline"></ion-icon> Port Scanner
+        </button>
+        <button type="button" class="tab-btn" data-tab="ssl" role="tab" aria-selected="false">
+          <ion-icon name="lock-closed-outline"></ion-icon> SSL Checker
+        </button>
+        <button type="button" class="tab-btn" data-tab="dns" role="tab" aria-selected="false">
+          <ion-icon name="globe-outline"></ion-icon> DNS Lookup
+        </button>
+        <button type="button" class="tab-btn" data-tab="whois" role="tab" aria-selected="false">
+          <ion-icon name="document-text-outline"></ion-icon> WHOIS
+        </button>
+        <button type="button" class="tab-btn" data-tab="ping" role="tab" aria-selected="false">
+          <ion-icon name="radio-outline"></ion-icon> Ping
+        </button>
+        <button type="button" class="tab-btn" data-tab="headers" role="tab" aria-selected="false">
+          <ion-icon name="code-slash-outline"></ion-icon> HTTP Headers
+        </button>
+        <button type="button" class="tab-btn" data-tab="subdomains" role="tab" aria-selected="false">
+          <ion-icon name="git-network-outline"></ion-icon> Subdomains
+        </button>
+        <button type="button" class="tab-btn" data-tab="geo" role="tab" aria-selected="false">
+          <ion-icon name="location-outline"></ion-icon> IP Geo
+        </button>
+        <button type="button" class="tab-btn" data-tab="cve" role="tab" aria-selected="false">
+          <ion-icon name="bug-outline"></ion-icon> CVE Search
+        </button>
+        <button type="button" class="tab-btn" data-tab="breach" role="tab" aria-selected="false">
+          <ion-icon name="eye-outline"></ion-icon> Breach Check
+        </button>
+        <button type="button" class="tab-btn" data-tab="schedules" role="tab" aria-selected="false">
+          <ion-icon name="calendar-outline"></ion-icon> Scheduled Scans
+        </button>
+      </nav>
+    </aside>
+
+    <div class="dash-main">
+  {% if login_welcome %}
+  <div class="glass-card" id="loginWelcomeBanner" style="margin-bottom:20px; border:1px solid rgba(0,212,255,0.2); padding:14px 20px; display:flex; align-items:center; gap:12px; animation: fadeIn 0.5s ease;">
+    <ion-icon name="shield-checkmark-outline" style="font-size:1.5rem; color:var(--accent-cyan);"></ion-icon>
+    <div style="font-size:0.92rem; color:var(--text-primary);">
+      {% if login_welcome.last_login %}
+      Welcome back, <strong>{{ login_welcome.username }}</strong>. Last login: {{ login_welcome.last_login }} from {{ login_welcome.last_ip or 'unknown' }}.
+      {% else %}
+      Welcome, <strong>{{ login_welcome.username }}</strong>. This is your first login — your dashboard is ready.
+      {% endif %}
+    </div>
   </div>
+  {% endif %}
 
   <!-- ══════════════════════ TAB: PORT SCANNER ══════════════════════ -->
   <div class="tab-panel active" id="tab-scanner">
@@ -212,7 +319,7 @@
             </svg>
             <div style="position:absolute; bottom:0; text-align:center; width:100%;">
               <div id="riskValue" style="font-size:1.8rem; font-weight:700; line-height:1;">0</div>
-              <div style="font-size:0.7rem; opacity:0.7;">Low Risk</div>
+              <div id="riskLabel" style="font-size:0.7rem; opacity:0.7;">Low Risk</div>
             </div>
           </div>
           <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:8px;">Based on open port criticality</div>
@@ -262,6 +369,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
             <h3 id="status-text">Ready to scan</h3>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" id="shareReportBtn" class="btn btn-secondary" disabled><ion-icon name="share-social-outline"></ion-icon> Share Report</button>
               <button id="csvBtn" class="btn btn-secondary" disabled><ion-icon name="document-text-outline"></ion-icon> CSV</button>
               <button id="downloadBtn" class="btn btn-secondary" disabled><ion-icon name="download-outline"></ion-icon> JSON</button>
               <button onclick="window.print()" class="btn btn-secondary"><ion-icon name="print-outline"></ion-icon> Report</button>
@@ -285,6 +393,7 @@
               <p style="margin-top:10px;">No scan results to display yet.</p>
             </div>
           </div>
+          <div id="scannerSonicAnchor"></div>
         </div>
       </div>
     </div>
@@ -410,6 +519,195 @@
     </div>
   </div>
 
+  <!-- ══════════════════════ TAB: HTTP HEADERS ══════════════════════ -->
+  <div class="tab-panel" id="tab-headers">
+    <div class="tool-layout">
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+            <ion-icon name="code-slash-outline" style="color:var(--accent-cyan);"></ion-icon> HTTP Security Headers
+          </h3>
+          <div class="form-group">
+            <label>URL</label>
+            <input id="headersUrl" placeholder="https://example.com">
+          </div>
+          <button id="btnHeaders" class="btn btn-primary" style="width:100%;">
+            <ion-icon name="analytics-outline"></ion-icon> Analyse headers
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px;">Header analysis</h3>
+          <div id="headersResult">
+            <div class="tool-placeholder"><ion-icon name="code-slash-outline"></ion-icon><p>Enter a URL to evaluate security headers.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TAB: SUBDOMAINS ══════════════════════ -->
+  <div class="tab-panel" id="tab-subdomains">
+    <div class="tool-layout">
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+            <ion-icon name="git-network-outline" style="color:var(--accent-cyan);"></ion-icon> Subdomain discovery
+          </h3>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:14px;">Brute-common hostnames (DNS + quick HTTP reachability).</p>
+          <div class="form-group">
+            <label>Root domain</label>
+            <input id="subdomainHost" placeholder="e.g. example.com">
+          </div>
+          <button id="btnSubdomains" class="btn btn-primary" style="width:100%;">
+            <ion-icon name="search-outline"></ion-icon> Find subdomains
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px;">Discovered hosts</h3>
+          <div id="subdomainsResult">
+            <div class="tool-placeholder"><ion-icon name="git-network-outline"></ion-icon><p>Run a scan to list resolving subdomains.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TAB: IP GEO ══════════════════════ -->
+  <div class="tab-panel" id="tab-geo">
+    <div class="tool-layout">
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+            <ion-icon name="location-outline" style="color:var(--accent-cyan);"></ion-icon> IP geolocation
+          </h3>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:14px;">Uses ip-api.com (HTTP). Leave blank to geolocate your current egress IP.</p>
+          <div class="form-group">
+            <label>IPv4 / IPv6 (optional)</label>
+            <input id="geoIp" placeholder="8.8.8.8">
+          </div>
+          <button id="btnGeo" class="btn btn-primary" style="width:100%;">
+            <ion-icon name="earth-outline"></ion-icon> Lookup
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px;">Geolocation</h3>
+          <div id="geoResult">
+            <div class="tool-placeholder"><ion-icon name="location-outline"></ion-icon><p>Lookup an IP or use your own.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TAB: CVE SEARCH ══════════════════════ -->
+  <div class="tab-panel" id="tab-cve">
+    <div class="tool-layout">
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+            <ion-icon name="bug-outline" style="color:var(--accent-cyan);"></ion-icon> NVD CVE search
+          </h3>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:14px;">Keyword search against the NVD CVE 2.0 API (rate-limited).</p>
+          <div class="form-group">
+            <label>Keyword / product</label>
+            <input id="cveQuery" placeholder="e.g. OpenSSL 3.0">
+          </div>
+          <button id="btnCve" class="btn btn-primary" style="width:100%;">
+            <ion-icon name="search-outline"></ion-icon> Search CVEs
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px;">Results</h3>
+          <div id="cveResult">
+            <div class="tool-placeholder"><ion-icon name="bug-outline"></ion-icon><p>Search the National Vulnerability Database.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TAB: BREACH CHECK ══════════════════════ -->
+  <div class="tab-panel" id="tab-breach">
+    <div class="tool-layout">
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+            <ion-icon name="eye-outline" style="color:var(--accent-cyan);"></ion-icon> Have I Been Pwned
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;">Check an email or domain against known data breaches (Have I Been Pwned API v3). Requires server <code style="font-family:'JetBrains Mono',monospace;">HIBP_API_KEY</code>.</p>
+          <div class="form-group">
+            <label>Email or domain</label>
+            <input id="breachQuery" placeholder="you@company.com or example.com">
+          </div>
+          <button type="button" id="btnBreach" class="btn btn-primary" style="width:100%;">
+            <ion-icon name="search-outline"></ion-icon> Check breaches
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px;">Breach intelligence</h3>
+          <div id="breachResult">
+            <div class="tool-placeholder"><ion-icon name="eye-outline"></ion-icon><p>Run a check to see exposed datasets and data classes.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TAB: SCHEDULED SCANS ══════════════════════ -->
+  <div class="tab-panel" id="tab-schedules">
+    <div class="tool-layout">
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+            <ion-icon name="calendar-outline" style="color:var(--accent-cyan);"></ion-icon> New schedule
+          </h3>
+          <div class="form-group">
+            <label>Target host / IP</label>
+            <input id="schedTarget" placeholder="e.g. 10.0.0.1">
+          </div>
+          <div class="form-group">
+            <label>Port range</label>
+            <input id="schedPorts" value="1-1024" placeholder="1-1024">
+          </div>
+          <div class="form-group">
+            <label>Frequency</label>
+            <select id="schedFreq" style="width:100%; padding:12px 16px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white;">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:16px;">
+            <input type="checkbox" id="schedNotify" style="width:auto;">
+            <span>Email me results (configure MAIL_* env + Flask-Mail)</span>
+          </label>
+          <button type="button" id="btnSchedAdd" class="btn btn-primary" style="width:100%;">
+            <ion-icon name="add-circle-outline"></ion-icon> Add schedule
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="glass-card">
+          <h3 style="margin-bottom:20px;">Your schedules</h3>
+          <div id="schedList" style="font-size:0.9rem; color:var(--text-secondary);">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    </div><!-- /.dash-main -->
+  </div><!-- /.dash-body -->
+
 </div><!-- /layout-container -->
 
 <!-- Banner Modal -->
@@ -447,13 +745,25 @@
 </div>
 
 <script>
+function csrfHeaders(json) {
+  const t = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const h = { 'X-CSRFToken': t || '' };
+  if (json !== false) h['Content-Type'] = 'application/json';
+  return h;
+}
+
 // ── TAB SWITCHING ────────────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'schedules') loadSchedules();
   });
 });
 
@@ -479,12 +789,15 @@ const resultsBody = document.getElementById('resultsBody');
 const emptyState = document.getElementById('empty-state');
 const downloadBtn = document.getElementById('downloadBtn');
 const csvBtn = document.getElementById('csvBtn');
+const shareReportBtn = document.getElementById('shareReportBtn');
 const clearBtn = document.getElementById('clearBtn');
 const progressBar = document.getElementById('progress-bar');
 const progressContainer = document.getElementById('progress-container');
 const voiceToggle = document.getElementById('voiceToggle');
 const riskMeter = document.getElementById('riskMeter');
 const riskValue = document.getElementById('riskValue');
+const riskLabel = document.getElementById('riskLabel');
+const scannerSonicAnchor = document.getElementById('scannerSonicAnchor');
 const elTotal = document.getElementById('stat-total');
 const elScanned = document.getElementById('stat-scanned');
 const elOpen = document.getElementById('stat-open');
@@ -504,14 +817,6 @@ renderHistory();
 
 function setProgress(pct) { progressContainer.hidden = false; progressBar.style.width = pct + '%'; }
 function speak(text) { if (voiceToggle.checked && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(text); u.rate = 1.1; u.pitch = 0.9; window.speechSynthesis.speak(u); } }
-function updateRiskScore(port, service) {
-  let risk = ['ssh','telnet','ftp','rdp','smb'].includes(service) ? 20 : ['http','https'].includes(service) ? 5 : 10;
-  currentRiskScore = Math.min(100, currentRiskScore + risk);
-  riskValue.textContent = currentRiskScore;
-  const maxLen = 125.6, dash = (currentRiskScore / 100) * maxLen;
-  riskMeter.style.strokeDasharray = `${dash}, ${maxLen}`;
-  riskMeter.style.stroke = currentRiskScore < 30 ? '#10b981' : currentRiskScore < 70 ? '#f59e0b' : '#ef4444';
-}
 function updateChart(pct) {
   scanChart.data.datasets[0].data = [pct, 100 - pct];
   scanChart.update();
@@ -535,8 +840,11 @@ clearBtn.addEventListener('click', () => {
   resultsTable.hidden = true; emptyState.hidden = false;
   openPortsCache = []; elTotal.textContent = elScanned.textContent = elOpen.textContent = '0';
   statusText.textContent = 'Ready to scan';
-  riskValue.textContent = '0'; riskMeter.style.strokeDasharray = '0, 126';
-  currentRiskScore = 0; downloadBtn.disabled = csvBtn.disabled = true;
+  riskValue.textContent = '0'; riskMeter.style.strokeDasharray = '0, 125.664';
+  riskMeter.style.stroke = '#00ffb2';
+  if (riskLabel) { riskLabel.textContent = 'Low Risk'; riskLabel.style.color = ''; }
+  if (scannerSonicAnchor) scannerSonicAnchor.innerHTML = '';
+  currentRiskScore = 0; downloadBtn.disabled = csvBtn.disabled = shareReportBtn.disabled = true;
   setProgress(0); updateChart(0);
 });
 
@@ -562,7 +870,7 @@ document.getElementById('btnQuickCheck').addEventListener('click', async () => {
   result.innerHTML = '<span style="color:var(--text-secondary)">Checking...</span>';
   document.getElementById('btnQuickCheck').disabled = true;
   try {
-    const res = await fetch('/check_port', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ target, port }) });
+    const res = await fetch('/check_port', { method:'POST', headers: csrfHeaders(), body: JSON.stringify({ target, port }) });
     const data = await res.json();
     if (data.error) result.innerHTML = `<span style="color:var(--accent-red)">Error</span>`;
     else if (data.open) { result.innerHTML = `<span style="color:var(--accent-green)">OPEN <ion-icon name="checkmark-circle"></ion-icon></span>`; speak(`Port ${port} is open.`); }
@@ -577,10 +885,12 @@ form.addEventListener('submit', async (e) => {
   speak("Detailed system scan initiated.");
   initDataTable(); dataTable.clear().draw();
   resultsTable.hidden = false; emptyState.hidden = true;
-  downloadBtn.disabled = csvBtn.disabled = true; openPortsCache = [];
+  downloadBtn.disabled = csvBtn.disabled = shareReportBtn.disabled = true; openPortsCache = [];
   setProgress(0); statusText.textContent = 'Initiating Scan...';
   let totalPorts = 0, scannedCount = 0, openCount = 0;
-  currentRiskScore = 0; riskValue.textContent = '0'; riskMeter.style.strokeDasharray = '0, 126';
+  currentRiskScore = 0; riskValue.textContent = '0'; riskMeter.style.strokeDasharray = '0, 125.664'; riskMeter.style.stroke = '#00ffb2';
+  if (riskLabel) { riskLabel.textContent = 'Low Risk'; riskLabel.style.color = ''; }
+  if (scannerSonicAnchor) scannerSonicAnchor.innerHTML = '';
   elScanned.textContent = elOpen.textContent = '0'; updateChart(0);
   const formData = new FormData(form);
   const params = new URLSearchParams(formData);
@@ -595,7 +905,7 @@ form.addEventListener('submit', async (e) => {
       setProgress(pct);
       if (data.open) {
         openCount++; elOpen.textContent = openCount; openPortsCache.push(data);
-        speak(`Port ${data.port} is open running ${data.service}`); updateRiskScore(data.port, data.service);
+        speak(`Port ${data.port} is open running ${data.service}`);
         let bannerB64 = btoa(encodeURIComponent(data.banner || '-'));
         dataTable.row.add([
           `<span style="font-family:'JetBrains Mono'">${data.port}</span>`,
@@ -608,12 +918,18 @@ form.addEventListener('submit', async (e) => {
     }
     else if (data.type === 'complete') {
       eventSource.close(); statusText.textContent = 'Scan Complete';
-      downloadBtn.disabled = csvBtn.disabled = false;
+      downloadBtn.disabled = csvBtn.disabled = shareReportBtn.disabled = false;
       let h = JSON.parse(localStorage.getItem('scanHistory') || '[]');
       h.unshift({ target: formData.get('target'), open: openCount });
       localStorage.setItem('scanHistory', JSON.stringify(h)); renderHistory();
       setProgress(100); updateChart(100);
-      speak(`Scan complete. Found ${openCount} open ports. Risk score is ${currentRiskScore}.`);
+      const ai = data.ai_analysis;
+      if (ai && typeof appendSonicToContainer === 'function' && scannerSonicAnchor) {
+        appendSonicToContainer(scannerSonicAnchor, ai);
+        if (typeof applySidebarPortThreat === 'function') applySidebarPortThreat(ai, riskMeter, riskValue, riskLabel);
+      }
+      const rs = ai && ai.score != null ? ai.score : currentRiskScore;
+      speak(`Scan complete. Found ${openCount} open ports. Threat score is ${rs}.`);
     }
     else if (data.type === 'error') { eventSource.close(); statusText.innerHTML = `<span style="color:var(--accent-red)">Error: ${data.message}</span>`; }
   };
@@ -628,9 +944,14 @@ document.getElementById('btnSsl').addEventListener('click', async () => {
   if (!host) { el.innerHTML = '<p style="color:var(--accent-warn)">Please enter a domain.</p>'; return; }
   el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Checking certificate…</div>';
   try {
-    const res = await fetch('/api/ssl_check', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ host, port }) });
+    const res = await fetch('/api/ssl_check', { method:'POST', headers: csrfHeaders(), body: JSON.stringify({ host, port }) });
     const d = await res.json();
-    if (d.error) { el.innerHTML = `<div class="ssl-banner invalid"><ion-icon name="close-circle-outline"></ion-icon>${d.error}</div>`; return; }
+    const mountAi = () => { if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis); };
+    if (!res.ok || d.valid === false) {
+      el.innerHTML = `<div class="ssl-banner invalid"><ion-icon name="close-circle-outline"></ion-icon>${d.error || 'SSL check failed'}</div>`;
+      mountAi();
+      return;
+    }
     const daysClass = d.days_left > 30 ? 'good' : d.days_left > 7 ? 'warn' : 'bad';
     el.innerHTML = `
       <div class="ssl-banner ${d.valid ? 'valid' : 'invalid'}">
@@ -647,6 +968,7 @@ document.getElementById('btnSsl').addEventListener('click', async () => {
       </div>
       ${d.sans && d.sans.length ? `<div style="margin-top:10px;"><div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.08em;">Subject Alternative Names</div><div class="san-tags">${d.sans.map(s=>`<span class="san-tag">${s}</span>`).join('')}</div></div>` : ''}
     `;
+    mountAi();
   } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">Error: ${e.message}</p>`; }
 });
 
@@ -657,15 +979,16 @@ document.getElementById('btnDns').addEventListener('click', async () => {
   if (!domain) { el.innerHTML = '<p style="color:var(--accent-warn)">Please enter a domain.</p>'; return; }
   el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Looking up DNS records…</div>';
   try {
-    const res = await fetch('/api/dns_lookup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ domain }) });
+    const res = await fetch('/api/dns_lookup', { method:'POST', headers: csrfHeaders(), body: JSON.stringify({ domain }) });
     const d = await res.json();
     if (d.error) { el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`; return; }
     let html = '';
     for (const [type, records] of Object.entries(d.records)) {
-      if (!records || records.length === 0) continue;
+      if (type === 'note' || !records || records.length === 0) continue;
       html += `<div class="dns-section"><div class="dns-type">${type}</div>${records.map(r=>`<div class="dns-row">${r}</div>`).join('')}</div>`;
     }
     el.innerHTML = html || '<p style="color:var(--text-secondary)">No records found.</p>';
+    if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
   } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">Error: ${e.message}</p>`; }
 });
 
@@ -679,7 +1002,7 @@ document.getElementById('btnWhois').addEventListener('click', async () => {
   if (!domain) { el.innerHTML = '<p style="color:var(--accent-warn)">Please enter a domain.</p>'; return; }
   el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Fetching WHOIS data…</div>';
   try {
-    const res = await fetch('/api/whois', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ domain }) });
+    const res = await fetch('/api/whois', { method:'POST', headers: csrfHeaders(), body: JSON.stringify({ domain }) });
     const d = await res.json();
     if (d.error) { el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`; return; }
     const fields = [
@@ -692,10 +1015,9 @@ document.getElementById('btnWhois').addEventListener('click', async () => {
       const val = Array.isArray(v) ? v.join('<br>') : v;
       return `<div class="whois-row"><div class="whois-key">${k}</div><div class="whois-val">${val}</div></div>`;
     }).join('');
+    if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
   } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">Error: ${e.message}</p>`; }
 });
-
-document.getElementById('whoisHost').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnWhois').click(); });
 
 // ── PING ─────────────────────────────────────────────────────────────────────
 document.getElementById('btnPing').addEventListener('click', async () => {
@@ -705,7 +1027,7 @@ document.getElementById('btnPing').addEventListener('click', async () => {
   if (!host) { el.innerHTML = '<p style="color:var(--accent-warn)">Please enter a host.</p>'; return; }
   el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Pinging…</div>';
   try {
-    const res = await fetch('/api/ping', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ host, count }) });
+    const res = await fetch('/api/ping', { method:'POST', headers: csrfHeaders(), body: JSON.stringify({ host, count }) });
     const d = await res.json();
     if (d.error) { el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`; return; }
     el.innerHTML = `
@@ -716,12 +1038,189 @@ document.getElementById('btnPing').addEventListener('click', async () => {
       </div>
       <div class="ping-output">${d.output}</div>
     `;
+    if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
   } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">Error: ${e.message}</p>`; }
 });
 
 document.getElementById('pingHost').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnPing').click(); });
 document.getElementById('sslHost').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnSsl').click(); });
 document.getElementById('whoisHost').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnWhois').click(); });
+
+// ── HTTP HEADERS ────────────────────────────────────────────────────────────
+document.getElementById('btnHeaders').addEventListener('click', async () => {
+  const url = document.getElementById('headersUrl').value.trim();
+  const el = document.getElementById('headersResult');
+  if (!url) { el.innerHTML = '<p style="color:var(--accent-warn)">Enter a URL.</p>'; return; }
+  el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Fetching…</div>';
+  try {
+    const res = await fetch('/api/headers_analyze', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ url }) });
+    const d = await res.json();
+    if (d.error && Object.keys(d.headers || {}).length === 0) {
+      el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`;
+      if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
+      return;
+    }
+    const rows = Object.entries(d.headers || {}).map(([k, v]) =>
+      `<div class="whois-row"><div class="whois-key">${k}</div><div class="whois-val" style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">${String(v).replace(/</g,'&lt;')}</div></div>`
+    ).join('');
+    el.innerHTML = `
+      <div class="result-grid" style="margin-bottom:12px;">
+        <div class="result-card"><div class="rc-label">Final URL</div><div class="rc-value" style="font-size:0.85rem;">${d.url || url}</div></div>
+        <div class="result-card"><div class="rc-label">Status</div><div class="rc-value">${d.status_code != null ? d.status_code : '—'}</div></div>
+      </div>
+      <div style="max-height:280px; overflow-y:auto;">${rows || '<p style="color:var(--text-secondary)">No headers</p>'}</div>
+    `;
+    if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
+  } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">${e.message}</p>`; }
+});
+
+// ── SUBDOMAINS ───────────────────────────────────────────────────────────────
+document.getElementById('btnSubdomains').addEventListener('click', async () => {
+  const domain = document.getElementById('subdomainHost').value.trim();
+  const el = document.getElementById('subdomainsResult');
+  if (!domain) { el.innerHTML = '<p style="color:var(--accent-warn)">Enter a domain.</p>'; return; }
+  el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Scanning…</div>';
+  try {
+    const res = await fetch('/api/subdomain_scan', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ domain }) });
+    const d = await res.json();
+    if (d.error) { el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`; return; }
+    if (!d.subdomains || !d.subdomains.length) {
+      el.innerHTML = '<p style="color:var(--text-secondary)">No matching subdomains resolved.</p>';
+    } else {
+      el.innerHTML = d.subdomains.map(s => {
+        const bad = s.dead ? '<span style="color:var(--accent-warn);font-size:0.72rem;margin-left:8px;">HTTP unreachable</span>' : '';
+        return `<div class="dns-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>${s.name}</span>${bad}</div>`;
+      }).join('');
+    }
+    if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
+  } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">${e.message}</p>`; }
+});
+
+// ── IP GEO ───────────────────────────────────────────────────────────────────
+document.getElementById('btnGeo').addEventListener('click', async () => {
+  const ip = document.getElementById('geoIp').value.trim();
+  const el = document.getElementById('geoResult');
+  el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Looking up…</div>';
+  try {
+    const res = await fetch('/api/geolocation', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ ip }) });
+    const d = await res.json();
+    if (d.error) { el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`; return; }
+    el.innerHTML = `
+      <div class="result-grid">
+        <div class="result-card"><div class="rc-label">IP</div><div class="rc-value">${d.ip}</div></div>
+        <div class="result-card"><div class="rc-label">Country</div><div class="rc-value">${d.country || '—'} (${d.country_code || '—'})</div></div>
+        <div class="result-card"><div class="rc-label">City</div><div class="rc-value">${d.city || '—'}</div></div>
+        <div class="result-card"><div class="rc-label">ISP / Org</div><div class="rc-value" style="font-size:0.85rem;">${d.isp || d.org || '—'}</div></div>
+      </div>
+    `;
+    if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
+  } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">${e.message}</p>`; }
+});
+
+// ── CVE SEARCH ───────────────────────────────────────────────────────────────
+document.getElementById('btnCve').addEventListener('click', async () => {
+  const query = document.getElementById('cveQuery').value.trim();
+  const el = document.getElementById('cveResult');
+  if (!query) { el.innerHTML = '<p style="color:var(--accent-warn)">Enter a search term.</p>'; return; }
+  el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Querying NVD…</div>';
+  try {
+    const res = await fetch('/api/cve_search', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ query }) });
+    const d = await res.json();
+    if (d.error) { el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`; return; }
+    const cards = (d.cves || []).map(c => {
+      const link = c.url ? `<a href="${c.url}" target="_blank" rel="noopener noreferrer" style="font-size:0.78rem;">NVD ↗</a>` : '';
+      const desc = (c.description || '').replace(/</g, '&lt;');
+      return `<div class="glass-card" style="margin-bottom:10px;padding:12px;">
+        <div style="font-weight:700;color:var(--accent-cyan);margin-bottom:6px;">${c.id} ${link}</div>
+        <div style="font-size:0.8rem;color:var(--text-secondary);">${c.severity || '—'} · CVSS ${c.base_score != null ? c.base_score : '—'}</div>
+        <p style="font-size:0.82rem;margin-top:8px;line-height:1.45;color:var(--text-primary);">${desc}</p>
+      </div>`;
+    }).join('');
+    el.innerHTML = cards || '<p style="color:var(--text-secondary)">No CVEs returned.</p>';
+    if (d.ai_analysis) appendSonicToContainer(el, d.ai_analysis);
+  } catch (e) { el.innerHTML = `<p style="color:var(--accent-red)">${e.message}</p>`; }
+});
+
+// ── SHARE REPORT ─────────────────────────────────────────────────────────────
+shareReportBtn.addEventListener('click', async () => {
+  const target = document.getElementById('target').value.trim();
+  if (!target || !openPortsCache.length) return;
+  shareReportBtn.disabled = true;
+  try {
+    const res = await fetch('/api/share-report', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ target, results: openPortsCache }) });
+    const d = await res.json();
+    if (d.url) {
+      try { await navigator.clipboard.writeText(d.url); } catch (_) {}
+      statusText.innerHTML = '<span style="color:var(--accent-green)">Share link ready (copied if permitted): ' + d.url + '</span>';
+    } else {
+      statusText.innerHTML = '<span style="color:var(--accent-red)">' + (d.error || 'Share failed') + '</span>';
+    }
+  } catch (e) {
+    statusText.innerHTML = '<span style="color:var(--accent-red)">Share failed</span>';
+  }
+  shareReportBtn.disabled = false;
+});
+
+// ── BREACH CHECK ────────────────────────────────────────────────────────────
+document.getElementById('btnBreach').addEventListener('click', async () => {
+  const query = document.getElementById('breachQuery').value.trim();
+  const el = document.getElementById('breachResult');
+  if (!query) { el.innerHTML = '<p style="color:var(--accent-warn)">Enter an email or domain.</p>'; return; }
+  el.innerHTML = '<div class="tool-placeholder"><span class="spinner"></span> Querying HIBP…</div>';
+  try {
+    const res = await fetch('/api/breach-check', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ query }) });
+    const d = await res.json();
+    if (d.error) { el.innerHTML = `<p style="color:var(--accent-red)">${d.error}</p>`; return; }
+    if (!d.breaches || !d.breaches.length) {
+      el.innerHTML = '<div class="ssl-banner valid"><ion-icon name="shield-checkmark-outline"></ion-icon>No known public breaches found for this query.</div>';
+      return;
+    }
+    const breaches = Array.isArray(d.breaches) ? d.breaches : [];
+    el.innerHTML = breaches.map(b => {
+      const name = b.Name || b.Title || b.name || 'Breach';
+      const classes = (b.DataClasses || []).join(', ') || '—';
+      return `<div class="glass-card" style="margin-bottom:12px; padding:14px;"><div style="font-weight:700; color:var(--accent-cyan); margin-bottom:6px;">${name}</div><div class="whois-row"><div class="whois-key">Exposed data</div><div class="whois-val">${classes}</div></div><div class="whois-row"><div class="whois-key">Breach date</div><div class="whois-val">${b.BreachDate || '—'}</div></div></div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<p style="color:var(--accent-red)">${e.message}</p>`;
+  }
+});
+
+// ── SCHEDULED SCANS ──────────────────────────────────────────────────────────
+async function loadSchedules() {
+  const el = document.getElementById('schedList');
+  try {
+    const res = await fetch('/api/schedules');
+    const d = await res.json();
+    if (!d.schedules || !d.schedules.length) {
+      el.innerHTML = '<p style="color:var(--text-secondary)">No schedules yet.</p>';
+      return;
+    }
+    el.innerHTML = d.schedules.map(s => `
+      <div class="glass-card" style="margin-bottom:10px; padding:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div><div style="font-weight:600;">${s.target}</div><div style="font-size:0.8rem; color:var(--text-secondary);">${s.frequency} · ${s.ports}</div></div>
+        <button type="button" class="btn btn-secondary btn-del-sched" data-id="${s.id}" style="padding:6px 12px;">Remove</button>
+      </div>`).join('');
+    el.querySelectorAll('.btn-del-sched').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await fetch('/api/schedules/' + btn.dataset.id, { method: 'DELETE', headers: csrfHeaders(false) });
+        loadSchedules();
+      });
+    });
+  } catch (e) {
+    el.innerHTML = '<p style="color:var(--accent-red)">Could not load schedules.</p>';
+  }
+}
+
+document.getElementById('btnSchedAdd').addEventListener('click', async () => {
+  const target = document.getElementById('schedTarget').value.trim();
+  const ports = document.getElementById('schedPorts').value.trim() || '1-1024';
+  const frequency = document.getElementById('schedFreq').value;
+  const notify_email = document.getElementById('schedNotify').checked;
+  if (!target) return;
+  const res = await fetch('/api/schedules', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ target, ports, frequency, notify_email }) });
+  if (res.ok) { document.getElementById('schedTarget').value = ''; loadSchedules(); }
+});
 </script>
 </body>
 </html>

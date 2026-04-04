@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CyberScan — NITECHSPARK</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    .layout-container.landing-page {
+      max-width: min(1720px, 100%);
+      margin: 0 auto;
+      padding-left: clamp(14px, 3.5vw, 48px);
+      padding-right: clamp(14px, 3.5vw, 48px);
+    }
+    .landing-page { padding-bottom: 48px; }
+    .landing-shell {
+      display: grid;
+      gap: 22px;
+      grid-template-columns: 1fr;
+      margin-top: 4px;
+    }
+    .landing-center {
+      order: -1;
+      width: 100%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    @media (min-width: 1280px) {
+      .landing-center { height: 100%; min-height: 100%; }
+    }
+    .landing-rail {
+      padding: 18px 20px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      box-sizing: border-box;
+    }
+    .landing-rail h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-cyan);
+      margin: 0 0 14px;
+      font-weight: 600;
+    }
+    .landing-rail ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex: 1;
+      min-height: 0;
+    }
+    .landing-rail li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .landing-rail li:last-child { margin-bottom: 0; }
+    .landing-rail li ion-icon {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--accent-cyan);
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+    .landing-rail .rail-foot {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    @media (min-width: 640px) and (max-width: 1279px) {
+      .landing-shell {
+        grid-template-columns: 1fr 1fr;
+        align-items: stretch;
+      }
+      .landing-center {
+        grid-column: 1 / -1;
+        order: -1;
+        height: auto;
+      }
+    }
+    @media (min-width: 1280px) {
+      .landing-shell {
+        grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(240px, 280px);
+        align-items: stretch;
+      }
+      .landing-center { order: 0; }
+    }
+    .landing-hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+    }
+    @media (max-width: 960px) {
+      .landing-hero {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        flex: none;
+      }
+    }
+    .landing-hero > .glass-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      box-sizing: border-box;
+    }
+    #quick-scan .table-container { flex: 1; min-height: 0; }
+    #quick-scan .qs-cta { margin-top: auto; }
+    .landing-about h2 { font-size: 1.35rem; margin-bottom: 12px; }
+    .landing-about ul { margin: 0; padding-left: 1.2rem; color: var(--text-secondary); line-height: 1.75; font-size: 0.92rem; }
+    .landing-about li { margin-bottom: 8px; }
+    .logo-tagline { font-size: 0.72rem; color: var(--text-secondary); max-width: 220px; line-height: 1.35; margin-top: 2px; }
+    .landing-header-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; }
+    .qs-blur tbody tr:nth-child(n+4) { filter: blur(6px); user-select: none; pointer-events: none; }
+    .qs-cta { margin-top: 1rem; padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,212,255,0.25); background: rgba(108,99,255,0.08); text-align: center; }
+    .landing-ethics-hero {
+      margin-top: 24px;
+      padding: 20px 24px;
+      border-radius: 16px;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(15, 23, 42, 0.85));
+    }
+    .landing-ethics-hero h2 {
+      font-size: 1.15rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fecaca;
+    }
+    .landing-ethics-hero p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.65; margin-bottom: 10px; }
+    .landing-ethics-hero p:last-child { margin-bottom: 0; }
+    .landing-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(16px, 2vw, 26px);
+      margin-top: 22px;
+      align-items: stretch;
+    }
+    @media (max-width: 900px) {
+      .landing-grid-3 { grid-template-columns: 1fr; }
+    }
+    .landing-grid-3 > .glass-card.landing-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    .landing-grid-3 > .glass-card.landing-card > p:last-child { margin-bottom: 0; }
+    .landing-grid-3 > .glass-card.landing-card > ul { flex: 1; }
+    .landing-card h3 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+    }
+    .landing-card p, .landing-card li { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
+    .landing-card ul { margin: 0; padding-left: 1.15rem; }
+    .landing-card li { margin-bottom: 6px; }
+    .landing-signed-in {
+      text-align: center;
+      padding: 36px 28px;
+      max-width: 640px;
+      margin: 24px auto 0;
+    }
+    .landing-signed-in h2 { margin-bottom: 12px; }
+    .landing-signed-in p { margin-bottom: 22px; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
+    .landing-signed-in .btn { margin: 0 6px 8px; }
+    .landing-footnote {
+      margin-top: 28px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(15,23,42,0.45);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+<div class="layout-container animate-entry landing-page">
+  <header class="app-header">
+    <div class="logo-area">
+      <img src="/static/logo.png" alt="NITECHSPARK" class="header-wordmark" onerror="this.onerror=null;this.src='/static/favicon.svg';">
+      <div>
+        <span class="logo-text">CyberScan</span>
+        <div class="logo-tagline">Reliable Server &amp; Monitoring Solutions</div>
+      </div>
+    </div>
+    <div class="landing-header-actions">
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="padding:8px 14px;">Dashboard</a>
+      <a href="{{ url_for('profile') }}" class="btn btn-secondary" style="padding:8px 14px;">
+        <ion-icon name="person-circle-outline"></ion-icon> Profile
+      </a>
+      <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding:8px 14px;">Logout</a>
+      {% else %}
+      {% set n = request.args.get('next') %}
+      <a href="{{ url_for('register', next=n) if n else url_for('register') }}" class="btn btn-primary" style="padding:8px 14px;">Sign up free</a>
+      <a href="{{ url_for('login', next=n) if n else url_for('login') }}" class="btn btn-secondary" style="padding:8px 14px;">Login</a>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if request.args.get('next') and not current_user.is_authenticated %}
+  <div class="glass-card" style="margin-bottom:16px; padding:12px 18px; border:1px solid rgba(6,182,212,0.25); font-size:0.9rem; color:var(--text-secondary);">
+    <ion-icon name="information-circle-outline" style="vertical-align:middle; color:var(--accent-cyan);"></ion-icon>
+    Sign in or create an account to open that page.
+  </div>
+  {% endif %}
+
+  {% if current_user.is_authenticated %}
+
+  <div class="glass-card landing-signed-in">
+    <h2>Welcome back, {{ current_user.username }}</h2>
+    <p>You are signed in. Use the dashboard for full port ranges, streaming scans, SSL, DNS, WHOIS, schedules, API keys, and Sonic Recon AI. This home page no longer shows the public quick-scan trial.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Open dashboard</a>
+    <a href="{{ url_for('profile') }}" class="btn btn-secondary">Profile &amp; account</a>
+  </div>
+
+  <section class="landing-ethics-hero" style="margin-top:28px;">
+    <h2><ion-icon name="shield-outline"></ion-icon> Ethical &amp; legal use</h2>
+    <p>CyberScan is intended only for legitimate cybersecurity work: systems you own, manage, or are <strong>explicitly authorised</strong> to test. Misuse (scanning strangers, harassment, credential theft, or breaking computer misuse laws) is prohibited and may be unlawful.</p>
+    <p>By using this service you accept responsibility for your actions. NITECHSPARK is not liable for misuse. If you are unsure whether a target is allowed, <strong>do not scan it</strong> until you have written permission.</p>
+  </section>
+
+  {% else %}
+
+  <p style="text-align:center; color:var(--text-secondary); font-size:0.95rem; margin-bottom:18px; max-width: 56rem; margin-left:auto; margin-right:auto;">
+    Start here — <strong style="color:var(--text-primary);">Sign up free</strong> or <strong style="color:var(--text-primary);">Login</strong> for the full toolkit, or try the limited quick scan in the workspace below.
+  </p>
+
+  <div class="landing-shell">
+    <aside class="glass-card landing-rail landing-rail-left" aria-label="Platform capabilities">
+      <h3>Toolkit</h3>
+      <ul>
+        <li><ion-icon name="scan-outline"></ion-icon> Port &amp; service discovery with live streaming on the full dashboard.</li>
+        <li><ion-icon name="lock-closed-outline"></ion-icon> TLS / SSL certificate checks, ciphers, and expiry insight.</li>
+        <li><ion-icon name="globe-outline"></ion-icon> DNS, WHOIS, HTTP headers, and subdomain hints.</li>
+        <li><ion-icon name="location-outline"></ion-icon> IP geolocation, CVE search, and breach-awareness (registered).</li>
+      </ul>
+      <p class="rail-foot"><strong style="color:var(--text-primary);">Guest trial:</strong> quick scan covers ports <strong>1–100</strong> only, once per hour per IP.</p>
+    </aside>
+
+    <div class="landing-center">
+  <div class="landing-hero">
+    <section class="glass-card landing-about">
+      <h2>What is CyberScan?</h2>
+      <p style="font-size:0.92rem; margin-bottom:14px;">
+        A professional security intelligence workspace for <strong>authorised</strong> assessment: port discovery, TLS inspection, DNS and WHOIS, HTTP headers, subdomain hints, IP geolocation, CVE search, and breach-awareness checks — plus optional Sonic Recon AI summaries when you register.
+      </p>
+      <ul>
+        <li><strong>Guests:</strong> try a limited quick scan (ports 1–100, rate-limited) — use the <strong>Quick port scan</strong> card next to this panel.</li>
+        <li><strong>Registered users:</strong> full port ranges, live streaming scans, schedules, API keys, and every tool in one dashboard.</li>
+      </ul>
+    </section>
+
+    <section class="glass-card" id="quick-scan">
+      <h2 style="margin-bottom:8px;">Quick port scan</h2>
+      <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px;">
+        One free scan per hour per IP · Ports <strong>1–100</strong> only · Rows after the third are blurred until you register.
+      </p>
+      <form id="qsForm" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+        <div class="form-group" style="flex:1; min-width:200px; margin:0;">
+          <label>Target</label>
+          <input name="target" id="qsTarget" placeholder="Host or IP" required>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="qsService" name="service" checked style="width:auto;">
+            Service probe
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary">Run scan</button>
+      </form>
+      <div id="qsStatus" style="margin-top:16px; color:var(--text-secondary); min-height:24px;"></div>
+      <div id="qsSonic"></div>
+      <div class="table-container" style="margin-top:12px;">
+        <table id="qsTable" class="qs-blur" hidden>
+          <thead>
+            <tr><th>Port</th><th>Service</th><th>Banner</th></tr>
+          </thead>
+          <tbody id="qsBody"></tbody>
+        </table>
+      </div>
+      <div class="qs-cta">
+        <strong style="color:var(--accent-cyan);">Unlock everything</strong> — full results, all tools, and higher limits.
+        {% set n = request.args.get('next') %}
+        <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+          <a href="{{ url_for('register', next=n) if n else url_for('register') }}" class="btn btn-primary">Create free account</a>
+          <a href="{{ url_for('login', next=n) if n else url_for('login') }}" class="btn btn-secondary">Sign in</a>
+        </div>
+      </div>
+    </section>
+  </div>
+    </div>
+
+    <aside class="glass-card landing-rail landing-rail-right" aria-label="Full workspace benefits">
+      <h3>Full workspace</h3>
+      <ul>
+        <li><ion-icon name="flash-outline"></ion-icon> <strong style="color:var(--text-primary);">Streaming scans</strong> — watch results as ports are tested.</li>
+        <li><ion-icon name="calendar-outline"></ion-icon> <strong style="color:var(--text-primary);">Schedules</strong> — recurring checks with optional email alerts.</li>
+        <li><ion-icon name="key-outline"></ion-icon> <strong style="color:var(--text-primary);">API keys</strong> — automate scans from your own scripts.</li>
+        <li><ion-icon name="share-social-outline"></ion-icon> <strong style="color:var(--text-primary);">Share reports</strong> — time-limited links for stakeholders.</li>
+      </ul>
+      <p class="rail-foot"><ion-icon name="shield-checkmark-outline" style="vertical-align:middle; color:var(--accent-green);"></ion-icon> Use only on systems you <strong>own or are authorised</strong> to test — see the ethics section below.</p>
+    </aside>
+  </div>
+
+  <section class="landing-ethics-hero">
+    <h2><ion-icon name="warning-outline"></ion-icon> Use this tool only ethically — not for attack or abuse</h2>
+    <p><strong>CyberScan is for defensive cybersecurity and authorised testing only.</strong> You must not use it to break into systems you do not own, to map or harass third parties, to steal data, or to violate computer crime laws in your country. Unauthorised scanning can be a criminal offence.</p>
+    <p>Only scan hosts, networks, and domains where you have <strong>clear permission</strong> (your own infrastructure, a client contract, or a formal bug-bounty / lab scope). If you are not sure, stop and get written approval first.</p>
+  </section>
+
+  <div class="landing-grid-3">
+    <div class="glass-card landing-card">
+      <h3><ion-icon name="checkmark-done-outline" style="color:var(--accent-green);"></ion-icon> Allowed use</h3>
+      <ul>
+        <li>Testing servers and apps you own or administer</li>
+        <li>Work under a contract or scope document that names the targets</li>
+        <li>Learning in your own lab or with explicit landlord permission</li>
+        <li>Security monitoring of assets your organisation is responsible for</li>
+      </ul>
+    </div>
+    <div class="glass-card landing-card">
+      <h3><ion-icon name="close-circle-outline" style="color:var(--accent-red);"></ion-icon> Prohibited use</h3>
+      <ul>
+        <li>Scanning strangers, competitors, or “just to see what’s open”</li>
+        <li>Credential stuffing, exploiting findings without authorisation, or data theft</li>
+        <li>Any purpose that violates laws or terms of your network provider</li>
+        <li>Automated abuse, bypassing rate limits, or disrupting third-party services</li>
+      </ul>
+    </div>
+    <div class="glass-card landing-card">
+      <h3><ion-icon name="lock-closed-outline" style="color:var(--accent-cyan);"></ion-icon> Security &amp; responsibility</h3>
+      <p>Results may include sensitive information. Protect your account, use strong passwords, and do not share API keys. We may log activity for abuse prevention. You are responsible for how you interpret and act on scan output.</p>
+    </div>
+  </div>
+
+  <div class="landing-grid-3" style="margin-top:18px;">
+    <div class="glass-card landing-card">
+      <h3><ion-icon name="eye-outline"></ion-icon> Know the risks</h3>
+      <p>Active scanning can trigger firewalls and alerts. Some organisations treat unexpected probes as incidents. Always operate inside an agreed scope and document your authorisation.</p>
+    </div>
+    <div class="glass-card landing-card">
+      <h3><ion-icon name="globe-outline"></ion-icon> Data &amp; third parties</h3>
+      <p>Some features call external APIs (e.g. geolocation, CVE databases, breach APIs). Do not submit highly sensitive personal data unless your policy allows it. You remain responsible for compliance with privacy rules that apply to you.</p>
+    </div>
+    <div class="glass-card landing-card">
+      <h3><ion-icon name="hand-left-outline"></ion-icon> Wrong-way use</h3>
+      <p>If your goal is to harm systems, hide malicious activity, or access data without permission, <strong>do not use CyberScan</strong>. This platform is built for defenders and authorised assessors, not for illegal activity.</p>
+    </div>
+  </div>
+
+  <p class="landing-footnote">
+    <strong style="color:var(--text-primary);">Disclaimer:</strong> NITECHSPARK / CyberScan provides tools “as is” for lawful security work. Operators and users must comply with all applicable laws. Nothing here is legal advice; consult qualified counsel for regulated environments.
+  </p>
+
+  {% endif %}
+</div>
+<script src="/static/js/main.js"></script>
+<script>
+(function(){
+  var form = document.getElementById('qsForm');
+  if (!form) return;
+  var tbody = document.getElementById('qsBody');
+  var table = document.getElementById('qsTable');
+  var statusEl = document.getElementById('qsStatus');
+  var es = null;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (es) es.close();
+    tbody.innerHTML = '';
+    table.hidden = true;
+    var qsSonic = document.getElementById('qsSonic');
+    if (qsSonic) qsSonic.innerHTML = '';
+    var target = document.getElementById('qsTarget').value.trim();
+    var service = document.getElementById('qsService').checked ? 'on' : '';
+    if (!target) return;
+    statusEl.textContent = 'Scanning…';
+    var q = new URLSearchParams({ target: target, service: service, threads: '50', timeout: '1.0' });
+    es = new EventSource('/stream_scan_public?' + q.toString());
+    es.onmessage = function(ev){
+      var d = JSON.parse(ev.data);
+      if (d.type === 'meta') { table.hidden = false; }
+      if (d.type === 'result' && d.open) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>'+d.port+'</td><td>'+(d.service||'')+'</td><td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;">'+(d.banner||'').replace(/</g,'')+'</td>';
+        tbody.appendChild(tr);
+      }
+      if (d.type === 'complete') {
+        es.close();
+        statusEl.textContent = 'Scan complete.';
+        if (d.ai_analysis && qsSonic && typeof appendSonicToContainer === 'function') {
+          appendSonicToContainer(qsSonic, d.ai_analysis);
+        }
+      }
+      if (d.type === 'error') { es.close(); statusEl.innerHTML = '<span style="color:var(--accent-red)">'+d.message+'</span>'; }
+    };
+    es.onerror = function(){
+      statusEl.innerHTML = '<span style="color:var(--accent-red)">Connection error (rate limit: 1 scan/hour per IP).</span>';
+      if (es && es.readyState !== EventSource.CLOSED) es.close();
+    };
+  });
+})();
+</script>
+</body>
+</html>

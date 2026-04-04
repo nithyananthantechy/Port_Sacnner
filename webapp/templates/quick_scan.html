@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quick Scan — CyberScan</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    .qs-blur tbody tr:nth-child(n+4) { filter: blur(6px); user-select: none; pointer-events: none; }
+    .qs-cta { margin-top: 1rem; padding: 1rem; border-radius: 12px; border: 1px solid rgba(0,212,255,0.25); background: rgba(108,99,255,0.08); text-align: center; }
+  </style>
+</head>
+<body>
+<div class="layout-container animate-entry">
+  <header class="app-header">
+    <div class="logo-area">
+      <img src="/static/logo.png" alt="" class="header-wordmark" onerror="this.onerror=null;this.src='/static/favicon.svg';">
+      <span class="logo-text">CyberScan</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+      <a href="{{ url_for('home') }}" class="btn btn-secondary" style="padding:8px 14px;">Home</a>
+      <a href="{{ url_for('register') }}" class="btn btn-primary" style="padding:8px 14px;">Sign up free</a>
+      <a href="{{ url_for('login') }}" class="btn btn-secondary" style="padding:8px 14px;">Login</a>
+    </div>
+  </header>
+
+  <div class="glass-card" style="max-width:900px; margin:0 auto;">
+    <h2 style="margin-bottom:8px;">Quick port scan</h2>
+    <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px;">
+      One free scan per hour per IP · Ports <strong>1–100</strong> only · Results beyond row 3 are blurred until you register.
+    </p>
+    <form id="qsForm" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+      <div class="form-group" style="flex:1; min-width:200px; margin:0;">
+        <label>Target</label>
+        <input name="target" id="qsTarget" placeholder="Host or IP" required>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="qsService" name="service" checked style="width:auto;">
+          Service probe
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">Run scan</button>
+    </form>
+    <div id="qsStatus" style="margin-top:16px; color:var(--text-secondary); min-height:24px;"></div>
+    <div id="qsSonic"></div>
+    <div class="table-container" style="margin-top:12px;">
+      <table id="qsTable" class="qs-blur" hidden>
+        <thead>
+          <tr><th>Port</th><th>Service</th><th>Banner</th></tr>
+        </thead>
+        <tbody id="qsBody"></tbody>
+      </table>
+    </div>
+    <div class="qs-cta">
+      <strong style="color:var(--accent-cyan);">Sign up free</strong> to see all results and unlock all tools (SSL, DNS, WHOIS, breach check, API, schedules, and full port ranges).
+      <div style="margin-top:10px;">
+        <a href="{{ url_for('register') }}" class="btn btn-primary">Create free account</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/static/js/main.js"></script>
+<script>
+(function(){
+  var form = document.getElementById('qsForm');
+  var tbody = document.getElementById('qsBody');
+  var table = document.getElementById('qsTable');
+  var statusEl = document.getElementById('qsStatus');
+  var es = null;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (es) es.close();
+    tbody.innerHTML = '';
+    table.hidden = true;
+    var qsSonic = document.getElementById('qsSonic');
+    if (qsSonic) qsSonic.innerHTML = '';
+    var target = document.getElementById('qsTarget').value.trim();
+    var service = document.getElementById('qsService').checked ? 'on' : '';
+    if (!target) return;
+    statusEl.textContent = 'Scanning…';
+    var q = new URLSearchParams({ target: target, service: service, threads: '50', timeout: '1.0' });
+    es = new EventSource('/stream_scan_public?' + q.toString());
+    var rows = 0;
+    es.onmessage = function(ev){
+      var d = JSON.parse(ev.data);
+      if (d.type === 'meta') { table.hidden = false; }
+      if (d.type === 'result' && d.open) {
+        rows++;
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>'+d.port+'</td><td>'+(d.service||'')+'</td><td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;">'+(d.banner||'').replace(/</g,'')+'</td>';
+        tbody.appendChild(tr);
+      }
+      if (d.type === 'complete') {
+        es.close();
+        statusEl.textContent = 'Scan complete.';
+        if (d.ai_analysis && qsSonic && typeof appendSonicToContainer === 'function') {
+          appendSonicToContainer(qsSonic, d.ai_analysis);
+        }
+      }
+      if (d.type === 'error') { es.close(); statusEl.innerHTML = '<span style="color:var(--accent-red)">'+d.message+'</span>'; }
+    };
+    es.onerror = function(){
+      statusEl.innerHTML = '<span style="color:var(--accent-red)">Connection error (rate limit: 1 scan/hour per IP).</span>';
+      if (es && es.readyState !== EventSource.CLOSED) es.close();
+    };
+  });
+})();
+</script>
+</body>
+</html>

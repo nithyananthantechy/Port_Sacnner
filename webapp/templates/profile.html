@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Profile — CyberScan</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    .profile-shell {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      align-items: start;
+      margin-top: 8px;
+    }
+    @media (max-width: 960px) {
+      .profile-shell { grid-template-columns: 1fr; }
+    }
+    .profile-identity {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(6,182,212,0.35), rgba(139,92,246,0.35));
+      border: 1px solid rgba(6,182,212,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
+    }
+    .profile-identity h1 {
+      font-size: 1.5rem;
+      margin: 0 0 6px 0;
+      font-weight: 700;
+    }
+    .profile-identity .sub { font-size: 0.9rem; color: var(--text-secondary); margin: 0; }
+    .profile-fields {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .profile-fields { grid-template-columns: 1fr; }
+    }
+    .profile-field {
+      background: rgba(15,23,42,0.45);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .profile-field .k {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .profile-field .v {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      word-break: break-word;
+      font-weight: 500;
+    }
+    .profile-field.full { grid-column: 1 / -1; }
+    .profile-aside {
+      position: sticky;
+      top: 20px;
+    }
+    .profile-aside h3 {
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .profile-aside p {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 12px;
+    }
+    .profile-aside p:last-child { margin-bottom: 0; }
+    .profile-aside .warn-box {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.08);
+      font-size: 0.82rem;
+      color: #fecaca;
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body>
+<div class="layout-container animate-entry">
+  <header class="app-header">
+    <div class="logo-area">
+      <a href="{{ url_for('home') }}" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+        <img src="/static/logo.png" alt="NITECHSPARK" class="header-wordmark" onerror="this.onerror=null;this.src='/static/favicon.svg';">
+        <span class="logo-text">CyberScan</span>
+      </a>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end;">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="padding:8px 14px;">Dashboard</a>
+      <a href="{{ url_for('home') }}" class="btn btn-secondary" style="padding:8px 14px;"><ion-icon name="home-outline"></ion-icon> Home</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding:8px 14px;">Logout</a>
+    </div>
+  </header>
+
+  <div class="profile-shell">
+    <div class="glass-card" style="padding:28px;">
+      <div class="profile-identity">
+        <div class="profile-avatar" aria-hidden="true">
+          <ion-icon name="person"></ion-icon>
+        </div>
+        <div>
+          <h1>Profile</h1>
+          <p class="sub">Account on this CyberScan instance — same identity you use in the dashboard header.</p>
+        </div>
+      </div>
+      {% if account %}
+      <div class="profile-fields">
+        <div class="profile-field">
+          <div class="k">Username</div>
+          <div class="v">{{ account['username'] }}</div>
+        </div>
+        <div class="profile-field">
+          <div class="k">Full name</div>
+          <div class="v">{{ account['full_name'] or '—' }}</div>
+        </div>
+        <div class="profile-field full">
+          <div class="k">Email</div>
+          <div class="v">{{ account['email'] }}</div>
+        </div>
+        <div class="profile-field">
+          <div class="k">Member since</div>
+          <div class="v">{{ account['created_at'] or '—' }}</div>
+        </div>
+        <div class="profile-field">
+          <div class="k">Last login</div>
+          <div class="v" style="font-size:0.85rem;">{{ account['last_login'] or '—' }}</div>
+        </div>
+        <div class="profile-field full">
+          <div class="k">Last login IP</div>
+          <div class="v" style="font-family:'JetBrains Mono',monospace; font-size:0.88rem;">{{ account['last_login_ip'] or '—' }}</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <aside class="profile-aside">
+      <div class="glass-card" style="padding:22px;">
+        <h3><ion-icon name="shield-checkmark-outline" style="color:var(--accent-cyan);"></ion-icon> Security</h3>
+        <p>Keep your password unique and strong. Do not share API keys. Sign out on shared devices. Review the ethical-use policy on the home page before scanning external targets.</p>
+        <h3 style="margin-top:18px;"><ion-icon name="document-text-outline" style="color:var(--accent-cyan);"></ion-icon> Responsible use</h3>
+        <p>Use CyberScan only on systems you own or are authorised to test. Unauthorised scanning may violate law and provider policies.</p>
+        <div class="warn-box">
+          <strong>Important:</strong> You are accountable for every scan and API call made with this account. Misuse can lead to suspension and legal consequences.
+        </div>
+      </div>
+      <div style="margin-top:16px; text-align:center;">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="width:100%; justify-content:center;">Back to dashboard</a>
+      </div>
+    </aside>
+  </div>
+</div>
+</body>
+</html>

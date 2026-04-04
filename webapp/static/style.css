@@ -9,6 +9,8 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 :root {
 	/* Colors */
@@ -208,6 +210,16 @@ label {
 	display: flex;
 	align-items: center;
 	gap: 12px;
+}
+
+/* NITECHSPARK / wordmark in app header — width scales, not tiny square */
+.header-wordmark {
+	max-height: 56px;
+	width: auto;
+	max-width: min(240px, 42vw);
+	object-fit: contain;
+	margin-right: 10px;
+	filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.25));
 }
 
 .logo-icon {
@@ -526,4 +538,337 @@ tr:hover td {
 	.stat-value {
 		color: white !important;
 	}
+}
+
+/* ── Sonic Recon AI panel ─────────────────────────────────────────────────── */
+
+.sonic-recon-panel {
+	margin-top: 22px;
+	padding: 22px 22px 18px;
+	background: rgba(15, 23, 42, 0.55);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	border-radius: 16px;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+	opacity: 0;
+	animation: sonicPanelIn 0.55s ease 0.6s forwards;
+}
+
+@keyframes sonicPanelIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.sonic-recon-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 18px;
+}
+
+.sonic-recon-shield {
+	font-size: 1.35rem;
+	color: var(--accent-cyan);
+}
+
+.sonic-recon-title {
+	font-family: 'Clash Display', 'Outfit', sans-serif;
+	font-size: 1.05rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--text-primary);
+}
+
+.sonic-pulse-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--accent-cyan);
+	margin-left: 4px;
+	box-shadow: 0 0 12px rgba(6, 182, 212, 0.85);
+	animation: sonicPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes sonicPulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.45;
+		transform: scale(0.85);
+	}
+}
+
+.sonic-gauge-section {
+	margin-bottom: 18px;
+}
+
+.sonic-gauge-wrap {
+	position: relative;
+	height: 118px;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.sonic-gauge-svg {
+	width: 100%;
+	max-width: 220px;
+	height: auto;
+}
+
+.sonic-gauge-arc {
+	transition: stroke 0.35s ease;
+}
+
+.sonic-gauge-center {
+	position: absolute;
+	bottom: 4px;
+	left: 50%;
+	transform: translateX(-50%);
+	text-align: center;
+	width: 100%;
+	pointer-events: none;
+}
+
+.sonic-gauge-value {
+	font-family: 'Clash Display', 'Outfit', sans-serif;
+	font-size: 2rem;
+	font-weight: 700;
+	line-height: 1.1;
+	color: var(--text-primary);
+}
+
+.sonic-gauge-sublabel {
+	font-family: 'Inter', 'Outfit', sans-serif;
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+	margin-top: 2px;
+}
+
+.sonic-gauge-risklabel {
+	font-family: 'Clash Display', 'Outfit', sans-serif;
+	font-size: 0.82rem;
+	font-weight: 600;
+	margin-top: 4px;
+}
+
+.sonic-info-banner {
+	text-align: center;
+	padding: 16px 12px;
+	border-radius: 12px;
+	background: rgba(6, 182, 212, 0.08);
+	border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.sonic-info-title {
+	font-family: 'Clash Display', 'Outfit', sans-serif;
+	font-size: 0.95rem;
+	color: var(--accent-cyan);
+	margin-bottom: 6px;
+}
+
+.sonic-info-sub {
+	font-size: 0.82rem;
+	color: var(--text-secondary);
+	line-height: 1.5;
+}
+
+.sonic-block {
+	margin-bottom: 18px;
+}
+
+.sonic-block-title {
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: var(--text-secondary);
+	margin-bottom: 10px;
+	font-weight: 600;
+}
+
+.sonic-breakdown-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+
+.sonic-breakdown-table th {
+	text-align: left;
+	padding: 8px 10px;
+	color: var(--text-secondary);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	font-weight: 600;
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.sonic-breakdown-table td {
+	padding: 10px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	vertical-align: top;
+}
+
+.sonic-bd-detail {
+	display: block;
+	color: var(--text-primary);
+	font-weight: 500;
+}
+
+.sonic-bd-sub {
+	display: block;
+	font-size: 0.78rem;
+	color: var(--text-secondary);
+	margin-top: 4px;
+	line-height: 1.4;
+}
+
+.sonic-bd-impact {
+	text-align: right;
+	font-weight: 700;
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.85rem;
+	white-space: nowrap;
+}
+
+.sonic-impact-high {
+	color: #ff4444;
+}
+
+.sonic-impact-med {
+	color: #febc2e;
+}
+
+.sonic-impact-zero {
+	color: #00ffb2;
+}
+
+.sonic-findings-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.sonic-finding-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+	background: rgba(0, 0, 0, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 10px;
+}
+
+.sonic-finding-left {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	min-width: 0;
+}
+
+.sonic-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	margin-top: 4px;
+	flex-shrink: 0;
+}
+
+.sonic-sev-critical {
+	background: #ff4444;
+	box-shadow: 0 0 8px rgba(255, 68, 68, 0.5);
+}
+
+.sonic-sev-high {
+	background: #ff8c42;
+}
+
+.sonic-sev-medium {
+	background: #febc2e;
+}
+
+.sonic-sev-low {
+	background: #00ffb2;
+}
+
+.sonic-sev-info {
+	background: #06b6d4;
+}
+
+.sonic-finding-text {
+	font-size: 0.86rem;
+	color: var(--text-primary);
+	line-height: 1.45;
+}
+
+.sonic-impact-badge {
+	flex-shrink: 0;
+	font-size: 0.78rem;
+	font-weight: 700;
+	font-family: 'JetBrains Mono', monospace;
+	padding: 4px 8px;
+	border-radius: 6px;
+	background: rgba(255, 255, 255, 0.06);
+	color: var(--text-secondary);
+}
+
+.sonic-remediation-toggle {
+	width: 100%;
+	margin-bottom: 10px;
+}
+
+.sonic-remediation-body {
+	margin-top: 4px;
+}
+
+.sonic-remediation-list {
+	padding-left: 1.1rem;
+	margin: 0;
+	color: var(--text-secondary);
+	font-size: 0.88rem;
+	line-height: 1.55;
+}
+
+.sonic-rem-action {
+	color: var(--text-primary);
+	margin-bottom: 8px;
+}
+
+.sonic-code {
+	background: rgba(0, 0, 0, 0.35);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 8px;
+	padding: 10px 12px;
+	margin: 8px 0 12px;
+	overflow-x: auto;
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.76rem;
+	color: var(--accent-cyan);
+	white-space: pre-wrap;
+}
+
+.sonic-recon-footer {
+	text-align: center;
+	margin-top: 16px;
+	padding-top: 14px;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	font-family: 'Clash Display', 'Outfit', sans-serif;
+	font-size: 0.72rem;
+	color: #22d3ee;
+	letter-spacing: 0.04em;
+}
+
+.sonic-recon-footer a {
+	color: #22d3ee;
 }

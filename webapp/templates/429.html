@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>429 — CyberScan</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .err-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .err-card {
+      text-align: center;
+      max-width: 520px;
+    }
+    .err-code {
+      font-family: 'Clash Display', 'Outfit', sans-serif;
+      font-size: clamp(4rem, 14vw, 7.5rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .err-card p { margin-bottom: 28px; max-width: 40ch; margin-left: auto; margin-right: auto; }
+  </style>
+</head>
+<body>
+  <div class="err-page">
+    <div class="glass-card err-card">
+      <div class="err-code">429</div>
+      <h1>Too many requests</h1>
+      <p>Too many requests. Please slow down and try again shortly.</p>
+      <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Return to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

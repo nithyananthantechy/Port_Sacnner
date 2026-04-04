@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Create account — CyberScan</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/auth.css">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="auth-body">
+  <div class="auth-bg-base"></div>
+  <div class="auth-starfield" aria-hidden="true"></div>
+  <div class="auth-grid" aria-hidden="true"></div>
+  <div class="auth-orb auth-orb--1" aria-hidden="true"></div>
+  <div class="auth-orb auth-orb--2" aria-hidden="true"></div>
+  <div class="auth-orb auth-orb--3" aria-hidden="true"></div>
+  <div class="auth-scanline" aria-hidden="true"></div>
+
+  <div class="auth-shell">
+    <div class="container">
+      <div class="auth-card">
+        <div id="registerMain">
+          <header class="text-center">
+            <img class="auth-brand-logo" src="/static/logo.png" alt="NITECHSPARK" onerror="this.onerror=null;this.src='/static/favicon.svg';">
+            <h1 class="auth-title">CyberScan</h1>
+            <p class="auth-sub">Professional Security Intelligence Platform</p>
+            <div class="auth-divider"></div>
+          </header>
+
+          <div id="registerErrors" class="d-none mb-3"></div>
+
+          <form id="registerForm" method="post" action="/register" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+            <div class="mb-3">
+              <label class="form-label" for="regFullName">Full name</label>
+              <div class="auth-input-wrap">
+                <ion-icon class="input-icon" name="person-outline" aria-hidden="true"></ion-icon>
+                <input class="form-control" id="regFullName" name="full_name" type="text" required placeholder="Ada Lovelace">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="regUsername">Username</label>
+              <div class="auth-input-wrap">
+                <ion-icon class="input-icon" name="at-outline" aria-hidden="true"></ion-icon>
+                <input class="form-control" id="regUsername" name="username" type="text" required pattern="[a-zA-Z0-9]+" placeholder="alphanumeric only">
+                <span class="auth-state-icon d-none ok" data-state="username"><ion-icon name="checkmark-circle"></ion-icon></span>
+                <span class="auth-state-icon d-none bad" data-state="username"><ion-icon name="close-circle"></ion-icon></span>
+              </div>
+              <div class="auth-feedback" data-feedback="username"></div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="regEmail">Email address</label>
+              <div class="auth-input-wrap">
+                <ion-icon class="input-icon" name="mail-outline" aria-hidden="true"></ion-icon>
+                <input class="form-control" id="regEmail" name="email" type="email" required placeholder="you@company.com">
+                <span class="auth-state-icon d-none ok" data-state="email"><ion-icon name="checkmark-circle"></ion-icon></span>
+                <span class="auth-state-icon d-none bad" data-state="email"><ion-icon name="close-circle"></ion-icon></span>
+              </div>
+              <div class="auth-feedback" data-feedback="email"></div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label" for="regPassword">Password</label>
+              <div class="auth-input-wrap">
+                <ion-icon class="input-icon" name="lock-closed-outline" aria-hidden="true"></ion-icon>
+                <input class="form-control" id="regPassword" name="password" type="password" required minlength="8" autocomplete="new-password" style="padding-right:2.75rem;">
+                <button type="button" class="auth-toggle-pw js-toggle-pw" data-target="regPassword" aria-label="Show password">
+                  <ion-icon name="eye-outline"></ion-icon>
+                </button>
+              </div>
+              <div id="pwStrength" class="pw-strength weak">
+                <div class="pw-strength-bar"><div class="pw-strength-fill"></div></div>
+                <div id="pwStrengthLabel" class="pw-strength-label">Weak</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="regPassword2">Confirm password</label>
+              <div class="auth-input-wrap">
+                <ion-icon class="input-icon" name="lock-closed-outline" aria-hidden="true"></ion-icon>
+                <input class="form-control" id="regPassword2" name="confirm_password" type="password" required autocomplete="new-password" style="padding-right:2.75rem;">
+                <button type="button" class="auth-toggle-pw js-toggle-pw" data-target="regPassword2" aria-label="Show password">
+                  <ion-icon name="eye-outline"></ion-icon>
+                </button>
+                <span class="auth-state-icon d-none ok" data-state="confirm"><ion-icon name="checkmark-circle"></ion-icon></span>
+                <span class="auth-state-icon d-none bad" data-state="confirm"><ion-icon name="close-circle"></ion-icon></span>
+              </div>
+              <div class="auth-feedback" data-feedback="confirm"></div>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" name="terms" value="1" id="regTerms">
+              <label class="form-check-label" for="regTerms">
+                I agree that CyberScan is for ethical and authorised use only. Unauthorised scanning is illegal.
+              </label>
+              <div class="auth-feedback" data-feedback="terms"></div>
+            </div>
+
+            <button type="submit" class="auth-btn-primary" id="registerSubmit">
+              <span class="js-btn-spin spinner-border spinner-border-sm d-none" role="status"></span>
+              <span class="ms-1">Create My Account</span>
+            </button>
+          </form>
+
+          <p class="text-center auth-link-muted mt-4 mb-0">
+            Already have an account? <a href="{{ url_for('login', next=next) if next else url_for('login') }}">Sign in</a>
+            <span class="d-block mt-2" style="font-size:0.85rem;"><a href="{{ url_for('home') }}">Back to home</a></span>
+          </p>
+
+          <div class="auth-badges">
+            <span class="auth-badge"><ion-icon name="lock-closed-outline"></ion-icon> Encrypted</span>
+            <span class="auth-badge"><ion-icon name="shield-outline"></ion-icon> Open Source</span>
+            <span class="auth-badge"><ion-icon name="eye-off-outline"></ion-icon> Ethical Use Only</span>
+          </div>
+        </div>
+
+        <div id="registerSuccess" class="auth-success d-none">
+          <svg class="auth-check-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="44"/>
+            <path d="M30 52 L45 66 L72 36"/>
+          </svg>
+          <h2 class="auth-success-title">Account Created!</h2>
+          <p class="auth-success-sub">Redirecting to your dashboard…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/auth.js" defer></script>
+</body>
+</html>
