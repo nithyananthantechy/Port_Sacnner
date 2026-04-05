@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import os
 import sys
 import ssl
@@ -15,7 +18,6 @@ from functools import wraps
 from urllib.parse import urlparse
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask_socketio import SocketIO
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,6 +42,7 @@ from flask import (
     abort,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_socketio import SocketIO
 
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
@@ -68,17 +71,6 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'cyberscan.db')
 
 
-def _socketio_async_mode():
-    """eventlet matches Gunicorn's eventlet worker on Render; threading avoids late
-    monkey_patch() when running `python app.py` (breaks Werkzeug locals on Windows)."""
-    explicit = (os.environ.get('SOCKETIO_ASYNC_MODE') or '').strip().lower()
-    if explicit in ('eventlet', 'threading', 'gevent', 'gevent_uwsgi'):
-        return explicit
-    if os.environ.get('RENDER'):
-        return 'eventlet'
-    return 'threading'
-
-
 def _env_bool(key, default=True):
     v = os.environ.get(key)
     if v is None:
@@ -89,10 +81,14 @@ def _env_bool(key, default=True):
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+# Secure session cookies require HTTPS; browsers ignore them on http:// (e.g. LAN IP).
+# Default Secure only when RENDER (or explicit SESSION_COOKIE_SECURE) indicates HTTPS deployment.
+_default_session_cookie_secure = str(os.environ.get('RENDER', '')).lower() in ('1', 'true', 'yes')
+
 app.config.update(
     SECRET_KEY=os.environ.get('SECRET_KEY')
     or os.environ.get('APP_SECRET_KEY', 'change-this-in-production'),
-    SESSION_COOKIE_SECURE=_env_bool('SESSION_COOKIE_SECURE', True),
+    SESSION_COOKIE_SECURE=_env_bool('SESSION_COOKIE_SECURE', _default_session_cookie_secure),
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=30),
@@ -114,8 +110,8 @@ csrf = CSRFProtect(app)
 mail = Mail(app)
 socketio = SocketIO(
     app,
-    cors_allowed_origins='*',
-    async_mode=_socketio_async_mode(),
+    cors_allowed_origins="*",
+    async_mode='eventlet',
     logger=False,
     engineio_logger=False,
 )

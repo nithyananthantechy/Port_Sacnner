@@ -70,6 +70,7 @@
         var email = (document.getElementById('forgotEmail') || {}).value || '';
         fetch('/forgot-password', {
           method: 'POST',
+          credentials: 'same-origin',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken(),
@@ -97,6 +98,7 @@
 
       fetch('/login', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: fd
       }).then(function (res) {
@@ -279,6 +281,7 @@
 
       fetch('/register', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: fd
       }).then(function (res) {
