@@ -376,7 +376,7 @@ class User(UserMixin):
         self.locked_until = row["locked_until"]
         self.org_id = row["org_id"] if "org_id" in row.keys() else None
         self.is_admin = bool(row["is_admin"]) if "is_admin" in row.keys() else False
-        self.is_super_admin = bool(row["is_super_admin"]) if "is_super_admin" in row.keys() else bool(row["is_admin"] if "is_admin" in row.keys() else False)
+        self.is_super_admin = bool(row["is_super_admin"] or row.get("is_admin")) if "is_super_admin" in row.keys() else bool(row.get("is_admin"))
         self._is_active = bool(row["is_active"]) if "is_active" in row.keys() else True
 
     @property
@@ -845,7 +845,6 @@ def get_all_users():
                 "user_id": str(u["id"]),
                 "username": u["username"],
                 "email": u["email"],
-                "org_id": u["org_id"],
                 "org_name": u["org_name"],
                 "role": role,
                 "is_active": bool(u["is_active"]),
@@ -969,41 +968,6 @@ def get_all_orgs():
             }
         )
     return jsonify(orgs)
-
-
-@app.route('/api/admin/orgs/create', methods=['POST'])
-@login_required
-def create_organization():
-    if not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-    data = request.get_json(silent=True) or {}
-    org_name = (data.get("org_name") or "").strip()
-    if not org_name:
-        return jsonify({"error": "Organization name is required."}), 400
-    db = get_db()
-    if db.execute("SELECT 1 FROM organizations WHERE LOWER(org_name) = LOWER(?)", (org_name,)).fetchone():
-        return jsonify({"error": "Organization already exists."}), 409
-    org_id = str(uuid.uuid4())
-    created_at = datetime.datetime.utcnow().isoformat() + "Z"
-    try:
-        db.execute(
-            "INSERT INTO organizations (org_id, org_name, is_active, created_at, updated_at) VALUES (?, ?, 1, ?, ?)",
-            (org_id, org_name, created_at, created_at),
-        )
-        db.commit()
-        log_action(
-            current_user.id,
-            "organization_created",
-            {"org_id": org_id, "org_name": org_name},
-        )
-        return jsonify({
-            "org_id": org_id,
-            "org_name": org_name,
-            "message": "Organization created successfully.",
-        }), 201
-    except Exception as e:
-        db.rollback()
-        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/admin/licenses', methods=['GET'])

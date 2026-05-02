@@ -376,7 +376,7 @@ class User(UserMixin):
         self.locked_until = row["locked_until"]
         self.org_id = row["org_id"] if "org_id" in row.keys() else None
         self.is_admin = bool(row["is_admin"]) if "is_admin" in row.keys() else False
-        self.is_super_admin = bool(row["is_super_admin"]) if "is_super_admin" in row.keys() else bool(row["is_admin"] if "is_admin" in row.keys() else False)
+        self.is_super_admin = bool(row["is_super_admin"] or row.get("is_admin")) if "is_super_admin" in row.keys() else bool(row.get("is_admin"))
         self._is_active = bool(row["is_active"]) if "is_active" in row.keys() else True
 
     @property
@@ -845,7 +845,6 @@ def get_all_users():
                 "user_id": str(u["id"]),
                 "username": u["username"],
                 "email": u["email"],
-                "org_id": u["org_id"],
                 "org_name": u["org_name"],
                 "role": role,
                 "is_active": bool(u["is_active"]),
@@ -853,84 +852,6 @@ def get_all_users():
             }
         )
     return jsonify(users)
-
-
-@app.route('/api/admin/users/create', methods=['POST'])
-@login_required
-def create_admin_user():
-    if not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-    data = request.get_json(silent=True) or {}
-    username = (data.get("username") or "").strip()
-    email = (data.get("email") or "").strip().lower()
-    full_name = (data.get("full_name") or "").strip()
-    role = (data.get("role") or "user").strip()
-    org_id = (data.get("org_id") or "").strip()
-
-    if role not in {"user", "org_admin"}:
-        return jsonify({"error": "Invalid role"}), 400
-    if not email or not full_name or not org_id:
-        return jsonify({"error": "Missing required fields"}), 400
-    if not username:
-        username = email.split("@")[0]
-    if not re.match(r"^[a-zA-Z0-9]+$", username):
-        return jsonify({"error": "Username must be alphanumeric only."}), 400
-    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
-        return jsonify({"error": "Invalid email address"}), 400
-
-    db = get_db()
-    if db.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone():
-        return jsonify({"error": "Username is already taken."}), 409
-    if db.execute("SELECT 1 FROM users WHERE LOWER(email) = LOWER(?)", (email,)).fetchone():
-        return jsonify({"error": "Email already registered"}), 409
-
-    org = db.execute("SELECT * FROM organizations WHERE org_id = ? AND is_active = 1", (org_id,)).fetchone()
-    if not org:
-        return jsonify({"error": "Organization not found"}), 404
-
-    temp_password = generate_temp_password()
-    created_at = datetime.datetime.utcnow().isoformat() + "Z"
-    is_admin = 1 if role == "org_admin" else 0
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO users (username, email, password_hash, full_name, is_admin, is_super_admin, org_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, 0, ?, 1, ?)",
-        (
-            username,
-            email,
-            _hash_password(temp_password),
-            full_name,
-            is_admin,
-            org_id,
-            created_at,
-        ),
-    )
-    user_id = cursor.lastrowid
-    cursor.execute(
-        "INSERT INTO user_org_mapping (user_id, org_id, role, assigned_at, is_active) VALUES (?, ?, ?, ?, 1)",
-        (user_id, org_id, role, created_at),
-    )
-    if role == "org_admin":
-        cursor.execute(
-            "UPDATE organizations SET org_admin_user_id = ? WHERE org_id = ?",
-            (user_id, org_id),
-        )
-    db.commit()
-    log_action(
-        current_user.id,
-        "user_created",
-        {"user_id": str(user_id), "username": username, "role": role, "org_id": org_id},
-    )
-    return jsonify(
-        {
-            "user_id": str(user_id),
-            "username": username,
-            "email": email,
-            "role": role,
-            "org_id": org_id,
-            "password": temp_password,
-            "message": "User created successfully. Share the temporary password with the new user.",
-        }
-    ), 201
 
 
 @app.route('/api/admin/orgs', methods=['GET'])
@@ -969,41 +890,6 @@ def get_all_orgs():
             }
         )
     return jsonify(orgs)
-
-
-@app.route('/api/admin/orgs/create', methods=['POST'])
-@login_required
-def create_organization():
-    if not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-    data = request.get_json(silent=True) or {}
-    org_name = (data.get("org_name") or "").strip()
-    if not org_name:
-        return jsonify({"error": "Organization name is required."}), 400
-    db = get_db()
-    if db.execute("SELECT 1 FROM organizations WHERE LOWER(org_name) = LOWER(?)", (org_name,)).fetchone():
-        return jsonify({"error": "Organization already exists."}), 409
-    org_id = str(uuid.uuid4())
-    created_at = datetime.datetime.utcnow().isoformat() + "Z"
-    try:
-        db.execute(
-            "INSERT INTO organizations (org_id, org_name, is_active, created_at, updated_at) VALUES (?, ?, 1, ?, ?)",
-            (org_id, org_name, created_at, created_at),
-        )
-        db.commit()
-        log_action(
-            current_user.id,
-            "organization_created",
-            {"org_id": org_id, "org_name": org_name},
-        )
-        return jsonify({
-            "org_id": org_id,
-            "org_name": org_name,
-            "message": "Organization created successfully.",
-        }), 201
-    except Exception as e:
-        db.rollback()
-        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/admin/licenses', methods=['GET'])

@@ -60,12 +60,7 @@
     <div class="qs-cta">
       <strong style="color:var(--accent-cyan);">Sign up free</strong> to see all results and unlock all tools (SSL, DNS, WHOIS, breach check, API, schedules, and full port ranges).
       <div style="margin-top:10px;">
-        {% if not enterprise_mode %}
         <a href="{{ url_for('register') }}" class="btn btn-primary">Create free account</a>
-        {% else %}
-        <a href="{{ url_for('login') }}" class="btn btn-secondary">Sign in</a>
-        <p style="margin-top:8px; color:var(--text-secondary);">Registration is disabled under enterprise mode.</p>
-        {% endif %}
       </div>
     </div>
   </div>

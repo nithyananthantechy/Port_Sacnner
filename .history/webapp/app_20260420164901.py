@@ -376,7 +376,7 @@ class User(UserMixin):
         self.locked_until = row["locked_until"]
         self.org_id = row["org_id"] if "org_id" in row.keys() else None
         self.is_admin = bool(row["is_admin"]) if "is_admin" in row.keys() else False
-        self.is_super_admin = bool(row["is_super_admin"]) if "is_super_admin" in row.keys() else bool(row["is_admin"] if "is_admin" in row.keys() else False)
+        self.is_super_admin = bool(row["is_super_admin"] or row.get("is_admin")) if "is_super_admin" in row.keys() else bool(row.get("is_admin"))
         self._is_active = bool(row["is_active"]) if "is_active" in row.keys() else True
 
     @property

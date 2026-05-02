@@ -116,7 +116,6 @@ app.config.update(
     WTF_CSRF_TIME_LIMIT=None,
     WTF_CSRF_SSL_STRICT=False,
 )
-app.config["ENTERPRISE_MODE"] = _env_bool("ENTERPRISE_MODE", False)
 
 # Mail (optional — scheduled scan alerts)
 app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "")
@@ -376,12 +375,7 @@ class User(UserMixin):
         self.locked_until = row["locked_until"]
         self.org_id = row["org_id"] if "org_id" in row.keys() else None
         self.is_admin = bool(row["is_admin"]) if "is_admin" in row.keys() else False
-        self.is_super_admin = bool(row["is_super_admin"]) if "is_super_admin" in row.keys() else bool(row["is_admin"] if "is_admin" in row.keys() else False)
-        self._is_active = bool(row["is_active"]) if "is_active" in row.keys() else True
-
-    @property
-    def is_active(self):
-        return self._is_active
+        self.is_super_admin = bool(row["is_super_admin"] or row["is_admin"]) if "is_super_admin" in row.keys() else bool(row["is_admin"])
 
     @staticmethod
     def from_id(uid):
@@ -786,10 +780,7 @@ def api_key_required(fn):
 
 @app.context_processor
 def inject_csrf():
-    return {
-        "csrf_token": generate_csrf,
-        "enterprise_mode": app.config["ENTERPRISE_MODE"],
-    }
+    return {"csrf_token": generate_csrf}
 
 
 # ─── PAGES ────────────────────────────────────────────────────────────────────
@@ -845,7 +836,6 @@ def get_all_users():
                 "user_id": str(u["id"]),
                 "username": u["username"],
                 "email": u["email"],
-                "org_id": u["org_id"],
                 "org_name": u["org_name"],
                 "role": role,
                 "is_active": bool(u["is_active"]),
@@ -853,84 +843,6 @@ def get_all_users():
             }
         )
     return jsonify(users)
-
-
-@app.route('/api/admin/users/create', methods=['POST'])
-@login_required
-def create_admin_user():
-    if not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-    data = request.get_json(silent=True) or {}
-    username = (data.get("username") or "").strip()
-    email = (data.get("email") or "").strip().lower()
-    full_name = (data.get("full_name") or "").strip()
-    role = (data.get("role") or "user").strip()
-    org_id = (data.get("org_id") or "").strip()
-
-    if role not in {"user", "org_admin"}:
-        return jsonify({"error": "Invalid role"}), 400
-    if not email or not full_name or not org_id:
-        return jsonify({"error": "Missing required fields"}), 400
-    if not username:
-        username = email.split("@")[0]
-    if not re.match(r"^[a-zA-Z0-9]+$", username):
-        return jsonify({"error": "Username must be alphanumeric only."}), 400
-    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
-        return jsonify({"error": "Invalid email address"}), 400
-
-    db = get_db()
-    if db.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone():
-        return jsonify({"error": "Username is already taken."}), 409
-    if db.execute("SELECT 1 FROM users WHERE LOWER(email) = LOWER(?)", (email,)).fetchone():
-        return jsonify({"error": "Email already registered"}), 409
-
-    org = db.execute("SELECT * FROM organizations WHERE org_id = ? AND is_active = 1", (org_id,)).fetchone()
-    if not org:
-        return jsonify({"error": "Organization not found"}), 404
-
-    temp_password = generate_temp_password()
-    created_at = datetime.datetime.utcnow().isoformat() + "Z"
-    is_admin = 1 if role == "org_admin" else 0
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO users (username, email, password_hash, full_name, is_admin, is_super_admin, org_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, 0, ?, 1, ?)",
-        (
-            username,
-            email,
-            _hash_password(temp_password),
-            full_name,
-            is_admin,
-            org_id,
-            created_at,
-        ),
-    )
-    user_id = cursor.lastrowid
-    cursor.execute(
-        "INSERT INTO user_org_mapping (user_id, org_id, role, assigned_at, is_active) VALUES (?, ?, ?, ?, 1)",
-        (user_id, org_id, role, created_at),
-    )
-    if role == "org_admin":
-        cursor.execute(
-            "UPDATE organizations SET org_admin_user_id = ? WHERE org_id = ?",
-            (user_id, org_id),
-        )
-    db.commit()
-    log_action(
-        current_user.id,
-        "user_created",
-        {"user_id": str(user_id), "username": username, "role": role, "org_id": org_id},
-    )
-    return jsonify(
-        {
-            "user_id": str(user_id),
-            "username": username,
-            "email": email,
-            "role": role,
-            "org_id": org_id,
-            "password": temp_password,
-            "message": "User created successfully. Share the temporary password with the new user.",
-        }
-    ), 201
 
 
 @app.route('/api/admin/orgs', methods=['GET'])
@@ -971,41 +883,6 @@ def get_all_orgs():
     return jsonify(orgs)
 
 
-@app.route('/api/admin/orgs/create', methods=['POST'])
-@login_required
-def create_organization():
-    if not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-    data = request.get_json(silent=True) or {}
-    org_name = (data.get("org_name") or "").strip()
-    if not org_name:
-        return jsonify({"error": "Organization name is required."}), 400
-    db = get_db()
-    if db.execute("SELECT 1 FROM organizations WHERE LOWER(org_name) = LOWER(?)", (org_name,)).fetchone():
-        return jsonify({"error": "Organization already exists."}), 409
-    org_id = str(uuid.uuid4())
-    created_at = datetime.datetime.utcnow().isoformat() + "Z"
-    try:
-        db.execute(
-            "INSERT INTO organizations (org_id, org_name, is_active, created_at, updated_at) VALUES (?, ?, 1, ?, ?)",
-            (org_id, org_name, created_at, created_at),
-        )
-        db.commit()
-        log_action(
-            current_user.id,
-            "organization_created",
-            {"org_id": org_id, "org_name": org_name},
-        )
-        return jsonify({
-            "org_id": org_id,
-            "org_name": org_name,
-            "message": "Organization created successfully.",
-        }), 201
-    except Exception as e:
-        db.rollback()
-        return jsonify({"error": str(e)}), 500
-
-
 @app.route('/api/admin/licenses', methods=['GET'])
 @login_required
 def get_all_licenses():
@@ -1043,15 +920,6 @@ def create_license():
     org_name = (data["org_name"] or "").strip()
     org_admin_name = (data["org_admin_name"] or "").strip()
     org_admin_email = (data["org_admin_email"] or "").strip().lower()
-    expires_at_raw = (data.get("expires_at") or "").strip()
-    expires_at = None
-    if expires_at_raw:
-        try:
-            expires_date = datetime.datetime.strptime(expires_at_raw, "%Y-%m-%d").date()
-            expires_at = expires_date.isoformat() + "Z"
-        except ValueError:
-            return jsonify({"error": "Invalid expiration date format. Use YYYY-MM-DD."}), 400
-
     if not org_name or not org_admin_name or not org_admin_email:
         return jsonify({"error": "Missing required fields"}), 400
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", org_admin_email):
@@ -1092,7 +960,7 @@ def create_license():
         )
         license_id = str(uuid.uuid4())
         cursor.execute(
-            "INSERT INTO license_metadata (license_id, license_key, org_name, org_admin_name, org_admin_email, org_admin_password_hash, created_by, created_at, expires_at, is_active, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
+            "INSERT INTO license_metadata (license_id, license_key, org_name, org_admin_name, org_admin_email, org_admin_password_hash, created_by, created_at, is_active, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
             (
                 license_id,
                 license_key,
@@ -1102,7 +970,6 @@ def create_license():
                 _hash_password(temp_password),
                 current_user.id,
                 created_at,
-                expires_at,
                 created_at,
             ),
         )
@@ -1323,12 +1190,6 @@ def remove_user(user_id):
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard"))
-    if app.config["ENTERPRISE_MODE"]:
-        flash(
-            "Self-registration is disabled under enterprise mode. Please contact your administrator to create an account.",
-            "error",
-        )
-        return redirect(url_for("login"))
     if request.method == "POST":
         return _register_post()
     return render_template("register.html", next=request.args.get("next"))

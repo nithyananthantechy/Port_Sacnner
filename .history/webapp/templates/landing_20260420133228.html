@@ -313,9 +313,7 @@
         <strong style="color:var(--accent-cyan);">Unlock everything</strong> — full results, all tools, and higher limits.
         {% set n = request.args.get('next') %}
         <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
-          {% if not enterprise_mode %}
           <a href="{{ url_for('register', next=n) if n else url_for('register') }}" class="btn btn-primary">Create free account</a>
-          {% endif %}
           <a href="{{ url_for('login', next=n) if n else url_for('login') }}" class="btn btn-secondary">Sign in</a>
         </div>
       </div>

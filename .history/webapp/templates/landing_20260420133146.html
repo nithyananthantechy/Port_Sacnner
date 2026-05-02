@@ -249,11 +249,7 @@
   {% else %}
 
   <p style="text-align:center; color:var(--text-secondary); font-size:0.95rem; margin-bottom:18px; max-width: 56rem; margin-left:auto; margin-right:auto;">
-    {% if not enterprise_mode %}
     Start here — <strong style="color:var(--text-primary);">Sign up free</strong> or <strong style="color:var(--text-primary);">Login</strong> for the full toolkit, or try the limited quick scan in the workspace below.
-    {% else %}
-    Enterprise use only: registration is restricted to licensed users. Contact your administrator to request access.
-    {% endif %}
   </p>
 
   <div class="landing-shell">
@@ -313,9 +309,7 @@
         <strong style="color:var(--accent-cyan);">Unlock everything</strong> — full results, all tools, and higher limits.
         {% set n = request.args.get('next') %}
         <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
-          {% if not enterprise_mode %}
           <a href="{{ url_for('register', next=n) if n else url_for('register') }}" class="btn btn-primary">Create free account</a>
-          {% endif %}
           <a href="{{ url_for('login', next=n) if n else url_for('login') }}" class="btn btn-secondary">Sign in</a>
         </div>
       </div>

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CyberScan Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Satoshi', sans-serif; background: #0f0f1e; color: #e0e0e0; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 5px; color: #00d4ff; }
+        .header p { color: #888; font-size: 0.95rem; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid #333; }
+        .tab-btn { 
+            padding: 12px 20px; 
+            background: none; 
+            border: none; 
+            color: #888; 
+            cursor: pointer; 
+            font-size: 1rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab-btn.active { 
+            color: #00d4ff; 
+            border-bottom-color: #00d4ff;
+        }
+        .tab-btn:hover { color: #00d4ff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .btn { 
+            padding: 10px 20px; 
+            background: #00d4ff; 
+            color: #000; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: #00a8cc; transform: translateY(-2px); }
+        .btn.danger { background: #ff4444; color: white; }
+        .btn.danger:hover { background: #cc0000; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        thead { background: #16213e; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #00d4ff; font-weight: 600; }
+        tr:hover { background: #252540; }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .modal-content { 
+            background: #1a1a2e; 
+            margin: 5% auto; 
+            padding: 30px; 
+            border: 1px solid #333;
+            width: 500px;
+            border-radius: 12px;
+        }
+        .modal-header h2 { color: #00d4ff; margin-bottom: 20px; }
+        .close { 
+            color: #888; 
+            float: right; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+        }
+        .close:hover { color: #fff; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 5px; 
+            color: #00d4ff; 
+            font-weight: 600;
+        }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 10px; 
+            background: #16213e; 
+            border: 1px solid #333; 
+            color: #fff; 
+            border-radius: 6px;
+        }
+        .form-group input:focus, .form-group select:focus { 
+            outline: none; 
+            border-color: #00d4ff;
+        }
+        .password-box {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border: 1px solid #00d4ff;
+        }
+        .password-box p { margin-bottom: 10px; }
+        .password-display { 
+            background: #0f0f1e; 
+            padding: 10px; 
+            border-radius: 4px; 
+            font-family: monospace; 
+            color: #00d4ff;
+            font-weight: bold;
+            word-break: break-all;
+        }
+        .alert { 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 6px;
+        }
+        .alert.success { background: #1e4620; color: #4ade80; border: 1px solid #4ade80; }
+        .alert.error { background: #4e1a1a; color: #ff6b6b; border: 1px solid #ff6b6b; }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-active { background: #1e4620; color: #4ade80; }
+        .status-inactive { background: #4e1a1a; color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 CyberScan Admin Dashboard</h1>
+            <p>Manage Users, Organizations, and Licenses</p>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('users', this)">👥 Users</button>
+            <button class="tab-btn" onclick="showTab('orgs', this)">🏢 Organizations</button>
+            <button class="tab-btn" onclick="showTab('licenses', this)">🔑 Licenses</button>
+        </div>
+        <div id="users" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>All Users</h2>
+                <div>
+                    <label for="userOrgFilter">Filter by Org:</label>
+                    <select id="userOrgFilter" style="width: 200px; padding: 8px;">
+                        <option value="">All Organizations</option>
+                    </select>
+                </div>
+            </div>
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Organization</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+        </div>
+        <div id="orgs" class="tab-content">
+            <div style="margin-bottom: 20px;">
+                <h2>All Organizations</h2>
+            </div>
+            <table id="orgsTable">
+                <thead>
+                    <tr>
+                        <th>Org ID</th>
+                        <th>Org Name</th>
+                        <th>Org Admin</th>
+                        <th>Users Count</th>
+                        <th>Licenses Count</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="orgsTableBody"></tbody>
+            </table>
+        </div>
+        <div id="licenses" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>All Licenses</h2>
+                <button class="btn" onclick="openLicenseModal()">+ Create License</button>
+            </div>
+            <table id="licensesTable">
+                <thead>
+                    <tr>
+                        <th>License Key</th>
+                        <th>Organization</th>
+                        <th>Org Admin</th>
+                        <th>Admin Email</th>
+                        <th>Created At</th>
+                        <th>Expires At</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="licensesTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="licenseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeLicenseModal()">&times;</span>
+                <h2>Create New License</h2>
+            </div>
+            <div id="licenseAlert"></div>
+            <form id="licenseForm">
+                <div class="form-group">
+                    <label>Organization Name *</label>
+                    <input type="text" id="licenseOrgName" required placeholder="e.g., Acme Corp">
+                </div>
+                <div class="form-group">
+                    <label>Org Admin Name *</label>
+                    <input type="text" id="licenseAdminName" required placeholder="e.g., John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Org Admin Email *</label>
+                    <input type="email" id="licenseAdminEmail" required placeholder="e.g., john@acme.com">
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 20px;">Create License</button>
+            </form>
+            <div id="licenseResult" style="display: none; margin-top: 20px;">
+                <h3 style="color: #4ade80; margin-bottom: 15px;">✅ License Created Successfully</h3>
+                <div class="password-box">
+                    <p><strong>License Key (Share with Org Admin):</strong></p>
+                    <div class="password-display" id="licenseKeyDisplay"></div>
+                    <button class="btn" onclick="copyToClipboard('licenseKeyDisplay')" style="margin-top: 10px; width: 100%;">📋 Copy License Key</button>
+                </div>
+                <div class="password-box">
+                    <p><strong>Temporary Password (Share once, then revoke):</strong></p>
+                    <div class="password-display" id="licensePasswordDisplay"></div>
+                    <button class="btn" onclick="copyToClipboard('licensePasswordDisplay')" style="margin-top: 10px; width: 100%;">📋 Copy Password</button>
+                </div>
+                <p style="color: #888; font-size: 0.9rem; margin-top: 15px;">⚠️ Org Admin must change password on first login.</p>
+                <button class="btn" onclick="closeLicenseModal()" style="width: 100%; margin-top: 15px;">Close</button>
+            </div>
+        </div>
+    </div>
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closePasswordModal()">&times;</span>
+                <h2>Reset User Password</h2>
+            </div>
+            <div id="passwordAlert"></div>
+            <p id="passwordUserInfo" style="margin-bottom: 20px; color: #00d4ff;"></p>
+            <div id="passwordResult" style="display: none;">
+                <h3 style="color: #4ade80; margin-bottom: 15px;">✅ Password Reset</h3>
+                <p style="margin-bottom: 10px;"><strong>New Temporary Password:</strong></p>
+                <div class="password-display" id="newPasswordDisplay"></div>
+                <button class="btn" onclick="copyToClipboard('newPasswordDisplay')" style="margin-top: 10px; width: 100%;">📋 Copy Password</button>
+                <p style="color: #888; font-size: 0.9rem; margin-top: 15px;">⚠️ User must change password on next login.</p>
+                <button class="btn" onclick="closePasswordModal()" style="width: 100%; margin-top: 15px;">Close</button>
+            </div>
+            <div id="passwordConfirm" style="display: block;">
+                <p>Are you sure you want to reset password for this user?</p>
+                <button class="btn" onclick="confirmPasswordReset()" style="width: 100%; margin-top: 15px;">✓ Confirm Reset</button>
+                <button class="btn" style="width: 100%; margin-top: 10px; background: #888;" onclick="closePasswordModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div id="linkModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeLinkModal()">&times;</span>
+                <h2 id="linkModalTitle">Link Organization to License</h2>
+            </div>
+            <div id="linkAlert"></div>
+            <form id="linkForm">
+                <div class="form-group">
+                    <label>Select License *</label>
+                    <select id="linkLicense" required>
+                        <option value="">-- Select License --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select Organization *</label>
+                    <select id="linkOrg" required>
+                        <option value="">-- Select Organization --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 20px;" id="linkSubmitBtn">Link</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        let currentModal = null;
+        let pendingPasswordResetUserId = null;
+        function showTab(tabName, button) {
+            const contents = document.querySelectorAll('.tab-content');
+            const btns = document.querySelectorAll('.tab-btn');
+            contents.forEach(c => c.classList.remove('active'));
+            btns.forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            if (button) button.classList.add('active');
+            if (tabName === 'users') loadUsers();
+            if (tabName === 'orgs') loadOrganizations();
+            if (tabName === 'licenses') loadLicenses();
+        }
+        async function parseJsonResponse(response) {
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                return response.json();
+            }
+            const text = await response.text();
+            return {
+                error: `Server returned non-JSON response (${response.status}). ${text ? text.substring(0, 250) : ''}`,
+            };
+        }
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users');
+                const users = await response.json();
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = users.map(u => `
+                    <tr>
+                        <td>${u.user_id}</td>
+                        <td>${u.username}</td>
+                        <td>${u.email}</td>
+                        <td>${u.org_name || 'N/A'}</td>
+                        <td>${u.role || 'user'}</td>
+                        <td><span class="status-badge ${u.is_active ? 'status-active' : 'status-inactive'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                        <td>
+                            ${u.user_id !== getCurrentUserId() ? `
+                                <button class="btn" onclick="openPasswordModal('${u.user_id}', '${u.username}')">🔑 Reset PWD</button>
+                                <button class="btn danger" onclick="removeUser('${u.user_id}', '${u.username}')">🗑️ Remove</button>
+                            ` : '<span style="color: #888;">(You)</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showAlert('usersTableBody', 'Failed to load users: ' + error.message, 'error');
+            }
+        }
+        async function loadOrganizations() {
+            try {
+                const response = await fetch('/api/admin/orgs');
+                const orgs = await response.json();
+                const tbody = document.getElementById('orgsTableBody');
+                tbody.innerHTML = orgs.map(o => `
+                    <tr>
+                        <td>${o.org_id.substring(0, 8)}...</td>
+                        <td>${o.org_name}</td>
+                        <td>${o.org_admin_name || 'N/A'}</td>
+                        <td>${o.users_count || 0}</td>
+                        <td>${o.licenses_count || 0}</td>
+                        <td><span class="status-badge ${o.is_active ? 'status-active' : 'status-inactive'}">${o.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn" onclick="openLinkModal('${o.org_id}', 'link')">🔗 Link License</button>
+                            <button class="btn" onclick="openLinkModal('${o.org_id}', 'unlink')">🔗 Unlink License</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showAlert('orgsTableBody', 'Failed to load organizations: ' + error.message, 'error');
+            }
+        }
+        async function loadLicenses() {
+            try {
+                const response = await fetch('/api/admin/licenses');
+                const licenses = await response.json();
+                const tbody = document.getElementById('licensesTableBody');
+                tbody.innerHTML = licenses.map(l => `
+                    <tr>
+                        <td><code>${l.license_key}</code></td>
+                        <td>${l.org_name}</td>
+                        <td>${l.org_admin_name}</td>
+                        <td>${l.org_admin_email}</td>
+                        <td>${new Date(l.created_at).toLocaleDateString()}</td>
+                        <td>${l.expires_at ? new Date(l.expires_at).toLocaleDateString() : 'Never'}</td>
+                        <td><span class="status-badge ${l.is_active ? 'status-active' : 'status-inactive'}">${l.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td>
+                            <button class="btn danger" onclick="removeLicense('${l.license_id}', '${l.license_key}')">🗑️ Remove</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showAlert('licensesTableBody', 'Failed to load licenses: ' + error.message, 'error');
+            }
+        }
+        function openLicenseModal() {
+            document.getElementById('licenseModal').style.display = 'block';
+            document.getElementById('licenseForm').style.display = 'block';
+            document.getElementById('licenseResult').style.display = 'none';
+        }
+        function closeLicenseModal() {
+            document.getElementById('licenseModal').style.display = 'none';
+            document.getElementById('licenseForm').reset();
+        }
+        document.getElementById('licenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const orgName = document.getElementById('licenseOrgName').value;
+            const adminName = document.getElementById('licenseAdminName').value;
+            const adminEmail = document.getElementById('licenseAdminEmail').value;
+            try {
+                const response = await fetch('/api/admin/licenses/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ org_name: orgName, org_admin_name: adminName, org_admin_email: adminEmail })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    showAlert('licenseAlert', result.error, 'error');
+                    return;
+                }
+                document.getElementById('licenseForm').style.display = 'none';
+                document.getElementById('licenseKeyDisplay').textContent = result.license_key;
+                document.getElementById('licensePasswordDisplay').textContent = result.org_admin_password;
+                document.getElementById('licenseResult').style.display = 'block';
+                loadLicenses();
+            } catch (error) {
+                showAlert('licenseAlert', 'Error creating license: ' + error.message, 'error');
+            }
+        });
+        function openPasswordModal(userId, username) {
+            pendingPasswordResetUserId = userId;
+            document.getElementById('passwordModal').style.display = 'block';
+            document.getElementById('passwordUserInfo').textContent = `User: ${username}`;
+            document.getElementById('passwordResult').style.display = 'none';
+            document.getElementById('passwordConfirm').style.display = 'block';
+        }
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            pendingPasswordResetUserId = null;
+        }
+        async function confirmPasswordReset() {
+            try {
+                const response = await fetch(`/api/admin/users/${pendingPasswordResetUserId}/password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({})
+                });
+                const result = await parseJsonResponse(response);
+                if (!response.ok) {
+                    showAlert('passwordAlert', result.error || 'Unknown server error', 'error');
+                    return;
+                }
+                document.getElementById('newPasswordDisplay').textContent = result.new_password;
+                document.getElementById('passwordResult').style.display = 'block';
+                document.getElementById('passwordConfirm').style.display = 'none';
+                loadUsers();
+            } catch (error) {
+                showAlert('passwordAlert', 'Error resetting password: ' + error.message, 'error');
+            }
+        }
+        async function removeUser(userId, username) {
+            if (!confirm(`Remove user "${username}"? This cannot be undone.`)) return;
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin',
+                });
+                const result = await parseJsonResponse(response);
+                if (!response.ok) {
+                    alert('Error: ' + (result.error || 'Unknown server error'));
+                    return;
+                }
+                alert('User removed successfully');
+                loadUsers();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        async function removeLicense(licenseId, licenseKey) {
+            if (!confirm(`Remove license "${licenseKey}"? This cannot be undone.`)) return;
+            try {
+                const response = await fetch(`/api/admin/licenses/${licenseId}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (!response.ok) {
+                    alert('Error: ' + result.error);
+                    return;
+                }
+                alert('License removed successfully');
+                loadLicenses();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        function openLinkModal(orgId, action) {
+            currentModal = { orgId, action };
+            document.getElementById('linkModal').style.display = 'block';
+            document.getElementById('linkModalTitle').textContent = action === 'link' ? 'Link License to Organization' : 'Unlink License from Organization';
+            document.getElementById('linkSubmitBtn').textContent = action === 'link' ? 'Link' : 'Unlink';
+            loadLicensesForLink();
+            loadOrgsForLink(orgId);
+        }
+        async function loadOrgsForLink(selectedOrgId) {
+            try {
+                const response = await fetch('/api/admin/orgs');
+                const orgs = await response.json();
+                const select = document.getElementById('linkOrg');
+                select.innerHTML = '<option value="">-- Select Organization --</option>' +
+                    orgs.map(o => `<option value="${o.org_id}" ${o.org_id === selectedOrgId ? 'selected' : ''}>${o.org_name}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading organizations:', error);
+            }
+        }
+        function closeLinkModal() {
+            document.getElementById('linkModal').style.display = 'none';
+            document.getElementById('linkForm').reset();
+        }
+        async function loadLicensesForLink() {
+            try {
+                const response = await fetch('/api/admin/licenses');
+                const licenses = await response.json();
+                const select = document.getElementById('linkLicense');
+                select.innerHTML = '<option value="">-- Select License --</option>' +
+                    licenses.map(l => `<option value="${l.license_id}">${l.license_key}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading licenses:', error);
+            }
+        }
+        document.getElementById('linkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const licenseId = document.getElementById('linkLicense').value;
+            const orgId = currentModal.orgId;
+            try {
+                const endpoint = currentModal.action === 'link' ? '/api/admin/orgs/link' : '/api/admin/orgs/unlink';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ org_id: orgId, license_id: licenseId })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    showAlert('linkAlert', result.error, 'error');
+                    return;
+                }
+                alert(`License ${currentModal.action === 'link' ? 'linked' : 'unlinked'} successfully`);
+                closeLinkModal();
+                loadOrganizations();
+                loadLicenses();
+            } catch (error) {
+                showAlert('linkAlert', 'Error: ' + error.message, 'error');
+            }
+        });
+        function showAlert(elementId, message, type) {
+            const alertDiv = document.getElementById(elementId);
+            alertDiv.innerHTML = `<div class="alert ${type}">${message}</div>`;
+        }
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+        function getCurrentUserId() {
+            return '{{ current_user.id }}';
+        }
+        loadUsers();
+    </script>
+</body>
+</html>

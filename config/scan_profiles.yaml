@@ -1,0 +1,8 @@
+# Predefined scan profiles
+profiles:
+  basic:
+    ports: "1-1024"
+    type: "SYN"
+  full:
+    ports: "1-65535"
+    type: "UDP"
